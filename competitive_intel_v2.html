@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FormAssembly — Competitive Intelligence Dashboard</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+:root {
+  --bg: #0a0a0b;
+  --bg2: #111113;
+  --bg3: #18181c;
+  --border: #222228;
+  --border2: #2e2e38;
+  --text: #e8e8f0;
+  --muted: #6b6b80;
+  --dim: #3a3a48;
+  --win: #22c55e;
+  --loss: #ef4444;
+  --warn: #f59e0b;
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'IBM Plex Sans', sans-serif;
+
+  /* Competitor colors */
+  --google:    #4285f4;
+  --microsoft: #00a4ef;
+  --hubspot:   #ff7a59;
+  --sfweb:     #00a1e0;
+  --jotform:   #ff6b2b;
+  --typeform:  #c084fc;
+  --formstack: #4a9eff;
+  --fillout:   #10b981;
+  --titan:     #f43f5e;
+  --nintex:    #a855f7;
+  --omni:      #64748b;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  min-height: 100vh;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* TOPBAR */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.logo {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.logo-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--win);
+  box-shadow: 0 0 8px var(--win);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+.topbar-right { display:flex; gap:20px; align-items:center; }
+.stat-chip {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.stat-chip b { color: var(--text); font-weight: 600; }
+
+/* LAYOUT */
+.layout {
+  display: grid;
+  grid-template-columns: 230px 1fr;
+  min-height: calc(100vh - 49px);
+}
+
+/* SIDEBAR */
+.sidebar {
+  border-right: 1px solid var(--border);
+  padding: 16px 0;
+  background: var(--bg);
+  overflow-y: auto;
+  max-height: calc(100vh - 49px);
+  position: sticky;
+  top: 49px;
+}
+.sidebar-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--dim);
+  padding: 0 16px 8px;
+  margin-top: 4px;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.15s;
+  border-left: 2px solid transparent;
+}
+.nav-item:hover { background: var(--bg2); }
+.nav-item.active { border-left-color: currentColor; background: var(--bg2); }
+.nav-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.nav-name { font-weight: 500; font-size: 12px; flex: 1; }
+.nav-count {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  background: var(--bg3);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+.sidebar-divider { height: 1px; background: var(--border); margin: 8px 16px; }
+.sidebar-meta {
+  padding: 8px 16px;
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--dim);
+  line-height: 1.8;
+}
+
+/* SECTIONS */
+.main { overflow-y: auto; }
+.section { display: none; }
+.section.active { display: block; }
+
+/* PAGE HEADER */
+.page-header {
+  padding: 28px 32px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.page-title { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+.page-sub { font-size: 12px; color: var(--muted); font-family: var(--mono); }
+
+/* METRICS */
+.metrics-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-bottom: 1px solid var(--border);
+}
+.metric-cell {
+  padding: 20px 24px;
+  border-right: 1px solid var(--border);
+}
+.metric-cell:last-child { border-right: none; }
+.metric-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.metric-value {
+  font-size: 24px;
+  font-weight: 600;
+  font-family: var(--mono);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.metric-sub { font-size: 10px; color: var(--muted); }
+
+/* OVERVIEW TABLE */
+.table-section { padding: 24px 32px; }
+.section-title {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-title::after { content:''; flex:1; height:1px; background:var(--border); }
+.comp-table { width: 100%; border-collapse: collapse; }
+.comp-table th {
+  text-align: left;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--dim);
+  padding: 0 0 10px;
+  border-bottom: 1px solid var(--border);
+}
+.comp-table td {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.comp-table tr:last-child td { border-bottom: none; }
+.comp-row { cursor: pointer; transition: background 0.1s; }
+.comp-row:hover td { background: rgba(255,255,255,.02); }
+.comp-name { display:flex; align-items:center; gap:10px; font-weight:500; font-size:13px; }
+.color-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.bar-wrap { height:3px; background:var(--bg3); border-radius:2px; overflow:hidden; margin-bottom:4px; }
+.bar-fill { height:100%; border-radius:2px; }
+.bar-pct { font-family:var(--mono); font-size:10px; color:var(--muted); }
+.badge {
+  display:inline-flex; align-items:center;
+  padding:2px 7px; border-radius:3px;
+  font-family:var(--mono); font-size:10px; font-weight:500;
+}
+.badge-danger { background:rgba(239,68,68,.12); color:var(--loss); border:1px solid rgba(239,68,68,.2); }
+.badge-warn { background:rgba(245,158,11,.12); color:var(--warn); border:1px solid rgba(245,158,11,.2); }
+.badge-ok { background:rgba(34,197,94,.12); color:var(--win); border:1px solid rgba(34,197,94,.2); }
+.tag {
+  display:inline-flex; padding:2px 6px; border-radius:2px;
+  font-size:10px; font-family:var(--mono);
+  margin-right:3px; margin-bottom:2px;
+}
+.chevron { color:var(--dim); font-size:14px; margin-left:8px; }
+
+/* CATEGORY CARDS (OVERVIEW) */
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.cat-card {
+  background: var(--bg);
+  padding: 20px 24px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.cat-card:hover { background: var(--bg2); }
+.cat-name {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+.cat-competitors { display: flex; flex-wrap: wrap; gap: 6px; }
+.cat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 3px;
+  border: 1px solid var(--border2);
+  background: var(--bg2);
+  cursor: pointer;
+}
+.cat-chip:hover { border-color: currentColor; }
+.cat-dot { width: 5px; height: 5px; border-radius: 50%; }
+
+/* BATTLECARD */
+.bc-header {
+  padding: 28px 32px 24px;
+  border-bottom: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: 1fr 160px 160px;
+  gap: 0;
+}
+.bc-name {
+  font-size: 26px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.bc-tagline { font-size: 12px; color: var(--muted); max-width: 360px; }
+.bc-url { font-family: var(--mono); font-size: 10px; color: var(--dim); margin-top: 6px; }
+.bc-kpi { text-align: center; border-left: 1px solid var(--border); padding: 0 20px; }
+.bc-kpi-val {
+  font-family: var(--mono);
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.bc-kpi-label { font-size: 9px; font-family: var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+.bc-body { display: grid; grid-template-columns: 1fr 1fr; }
+.bc-panel { padding: 22px 28px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.bc-panel:nth-child(even) { border-right: none; }
+.bc-panel-title {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 14px;
+}
+.bc-panel-wide { grid-column: span 2; border-right: none; }
+.insight-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.insight-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.insight-marker { width: 2px; border-radius: 1px; flex-shrink: 0; align-self: stretch; min-height: 16px; }
+.insight-text { font-size: 12px; line-height: 1.6; color: #c8c8d8; }
+.score-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+.score-label { font-size:11px; color:var(--muted); width:130px; flex-shrink:0; }
+.score-track { flex:1; height:3px; background:var(--bg3); border-radius:2px; overflow:hidden; }
+.score-fill { height:100%; border-radius:2px; }
+.score-num { font-family:var(--mono); font-size:10px; color:var(--muted); width:24px; text-align:right; }
+.quote-block {
+  background: var(--bg2);
+  border-left: 2px solid var(--dim);
+  padding: 10px 12px;
+  border-radius: 0 4px 4px 0;
+  margin-bottom: 10px;
+}
+.quote-block:last-child { margin-bottom: 0; }
+.quote-text { font-size: 11px; color: #b8b8cc; font-style: italic; line-height: 1.6; }
+.quote-source { font-family: var(--mono); font-size: 9px; color: var(--dim); margin-top: 6px; text-transform: uppercase; letter-spacing: .08em; }
+.pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+.price-tier {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 10px 12px;
+}
+.price-tier-name { font-family: var(--mono); font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 4px; }
+.price-tier-val { font-family: var(--mono); font-size: 14px; font-weight: 600; }
+.integration-list { list-style: none; }
+.integration-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+.integration-list li:last-child { border-bottom: none; }
+.int-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
+
+@keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+.section.active { animation: fadeUp 0.25s ease both; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo"><div class="logo-dot"></div>FORMASSEMBLY — COMPETITIVE INTELLIGENCE</div>
+  <div class="topbar-right">
+    <div class="stat-chip">COMPETITORS <b>11</b></div>
+    <div class="stat-chip">SOURCE <b>BATTLECARD DOC</b></div>
+    <div class="stat-chip" style="color:var(--win)">LIVE</div>
+  </div>
+</div>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-label">Navigation</div>
+    <div class="nav-item active" style="color:#e8e8f0" onclick="show('overview')">
+      <div class="nav-dot" style="background:var(--win)"></div>
+      <span class="nav-name">Overview</span>
+    </div>
+
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-label">Free / Bundled</div>
+    <div class="nav-item" style="color:var(--google)" onclick="show('google')">
+      <div class="nav-dot" style="background:var(--google)"></div>
+      <span class="nav-name">Google Forms</span>
+    </div>
+    <div class="nav-item" style="color:var(--microsoft)" onclick="show('microsoft')">
+      <div class="nav-dot" style="background:var(--microsoft)"></div>
+      <span class="nav-name">Microsoft Forms</span>
+    </div>
+
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-label">CRM-Native</div>
+    <div class="nav-item" style="color:var(--hubspot)" onclick="show('hubspot')">
+      <div class="nav-dot" style="background:var(--hubspot)"></div>
+      <span class="nav-name">HubSpot Forms</span>
+    </div>
+    <div class="nav-item" style="color:var(--sfweb)" onclick="show('sfweb')">
+      <div class="nav-dot" style="background:var(--sfweb)"></div>
+      <span class="nav-name">SF Web-to-Lead</span>
+    </div>
+    <div class="nav-item" style="color:var(--omni)" onclick="show('omni')">
+      <div class="nav-dot" style="background:var(--omni)"></div>
+      <span class="nav-name">OmniScript</span>
+    </div>
+
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-label">Form Builders</div>
+    <div class="nav-item" style="color:var(--jotform)" onclick="show('jotform')">
+      <div class="nav-dot" style="background:var(--jotform)"></div>
+      <span class="nav-name">Jotform</span>
+    </div>
+    <div class="nav-item" style="color:var(--typeform)" onclick="show('typeform')">
+      <div class="nav-dot" style="background:var(--typeform)"></div>
+      <span class="nav-name">Typeform</span>
+    </div>
+    <div class="nav-item" style="color:var(--formstack)" onclick="show('formstack')">
+      <div class="nav-dot" style="background:var(--formstack)"></div>
+      <span class="nav-name">Formstack</span>
+    </div>
+    <div class="nav-item" style="color:var(--fillout)" onclick="show('fillout')">
+      <div class="nav-dot" style="background:var(--fillout)"></div>
+      <span class="nav-name">Fillout</span>
+    </div>
+
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-label">Enterprise / Platform</div>
+    <div class="nav-item" style="color:var(--titan)" onclick="show('titan')">
+      <div class="nav-dot" style="background:var(--titan)"></div>
+      <span class="nav-name">Titan DXP</span>
+    </div>
+    <div class="nav-item" style="color:var(--nintex)" onclick="show('nintex')">
+      <div class="nav-dot" style="background:var(--nintex)"></div>
+      <span class="nav-name">Nintex</span>
+    </div>
+
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-meta">
+      Source: FA Battlecard Doc<br>
+      Updated: Apr 2026
+    </div>
+  </div>
+
+  <!-- ═══════════ OVERVIEW ═══════════ -->
+  <div id="section-overview" class="section main active">
+    <div class="page-header">
+      <div class="page-title">Competitive Intelligence</div>
+      <div class="page-sub">FormAssembly vs. 11 competitors · Sourced from internal battlecard document</div>
+    </div>
+    <div class="metrics-row">
+      <div class="metric-cell">
+        <div class="metric-label">Total Competitors</div>
+        <div class="metric-value">11</div>
+        <div class="metric-sub">tracked and documented</div>
+      </div>
+      <div class="metric-cell">
+        <div class="metric-label">Top Win Theme</div>
+        <div class="metric-value" style="font-size:16px;padding-top:6px">Compliance</div>
+        <div class="metric-sub">HIPAA, FedRAMP, DoD IL4</div>
+      </div>
+      <div class="metric-cell">
+        <div class="metric-label">Biggest Threat</div>
+        <div class="metric-value" style="color:var(--jotform);font-size:16px;padding-top:6px">Jotform</div>
+        <div class="metric-sub">Price + AI Agents push</div>
+      </div>
+      <div class="metric-cell">
+        <div class="metric-label">FA Differentiator</div>
+        <div class="metric-value" style="font-size:14px;padding-top:6px">Salesforce Depth</div>
+        <div class="metric-sub">Unlimited · Bi-directional · Any object</div>
+      </div>
+    </div>
+
+    <!-- Category tiles -->
+    <div class="category-grid">
+      <div class="cat-card">
+        <div class="cat-name">Free / Bundled</div>
+        <div class="cat-competitors">
+          <div class="cat-chip" style="color:var(--google)" onclick="show('google')"><div class="cat-dot" style="background:var(--google)"></div>Google Forms</div>
+          <div class="cat-chip" style="color:var(--microsoft)" onclick="show('microsoft')"><div class="cat-dot" style="background:var(--microsoft)"></div>Microsoft Forms</div>
+        </div>
+      </div>
+      <div class="cat-card">
+        <div class="cat-name">CRM-Native</div>
+        <div class="cat-competitors">
+          <div class="cat-chip" style="color:var(--hubspot)" onclick="show('hubspot')"><div class="cat-dot" style="background:var(--hubspot)"></div>HubSpot</div>
+          <div class="cat-chip" style="color:var(--sfweb)" onclick="show('sfweb')"><div class="cat-dot" style="background:var(--sfweb)"></div>SF Web-to-Lead</div>
+          <div class="cat-chip" style="color:var(--omni)" onclick="show('omni')"><div class="cat-dot" style="background:var(--omni)"></div>OmniScript</div>
+        </div>
+      </div>
+      <div class="cat-card">
+        <div class="cat-name">Enterprise / Platform</div>
+        <div class="cat-competitors">
+          <div class="cat-chip" style="color:var(--titan)" onclick="show('titan')"><div class="cat-dot" style="background:var(--titan)"></div>Titan DXP</div>
+          <div class="cat-chip" style="color:var(--nintex)" onclick="show('nintex')"><div class="cat-dot" style="background:var(--nintex)"></div>Nintex</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-section">
+      <div class="section-title">All Competitors</div>
+      <table class="comp-table">
+        <thead>
+          <tr>
+            <th style="width:180px">Competitor</th>
+            <th>Positioning</th>
+            <th style="width:180px">FA Win Angle</th>
+            <th style="width:100px">Threat Level</th>
+            <th style="width:32px"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="comp-row" onclick="show('google')"><td><div class="comp-name"><div class="color-dot" style="background:var(--google)"></div>Google Forms</div></td><td style="color:var(--muted);font-size:12px">Free, simple surveys for G-Workspace users</td><td><span class="tag" style="background:rgba(34,197,94,.1);color:var(--win)">Compliance</span><span class="tag" style="background:rgba(34,197,94,.08);color:rgba(34,197,94,.7)">SF Depth</span></td><td><span class="badge badge-ok">LOW</span></td><td><span class="chevron">›</span></td></tr>
+          <tr class="comp-row" onclick="show('microsoft')"><td><div class="comp-name"><div class="color-dot" style="background:var(--microsoft)"></div>Microsoft Forms</div></td><td style="color:var(--muted);font-size:12px">Simple data collection bundled in M365</td><td><span class="tag" style="background:rgba(34,197,94,.1);color:var(--win)">FedRAMP</span><span class="tag" style="background:rgba(34,197,94,.08);color:rgba(34,197,94,.7)">Bi-dir Sync</span></td><td><span class="badge badge-ok">LOW</span></td><td><span class="chevron">›</span></td></tr>
+          <tr class="comp-row" onclick="show('hubspot')"><td><div class="comp-name"><div class="color-dot" style="background:var(--hubspot)"></div>HubSpot Forms</div></td><td style="color:var(--muted);font-size:12px">Simple forms, lacking in compliance</td><td><span class="tag" style="background:rgba(255,122,89,.1);color:var(--hubspot)">Compliance</span><span class="tag" style="background:rgba(255,122,89,.08);color:rgba(255,122,89,.7)">Complex Logic</span></td><td><span class="badge badge-warn">MEDIUM</span></td><td><span class="chevron">›</span></td></tr>
+          <tr class="comp-row" onclick="show('sfweb')"><td><div class="comp-name"><div class="color-dot" style="background:var(--sfweb)"></div>SF Web-to-Lead</div></td><td style="color:var(--muted);font-size:12px">Simple, limited, native SF forms</td><td><span class="tag" style="background:rgba(0,161,224,.1);color:var(--sfweb)">Unlimited</span><span class="tag" style="background:rgba(0,161,224,.08);color:rgba(0,161,224,.7)">File Uploads</span></td><td><span class="badge badge-warn">MEDIUM</span></td><td><span class="chevron">›</span></td></tr>
+          <tr class="comp-row" onclick="show('jotform')"><td><div class="comp-name"><div class="color-dot" style="background:var(--jotform)"></div>Jotform</div></td><td style="color:var(--muted);font-size:12px">Versatile, AI-driven workflow platform</td><td><span class="tag" style="background:rgba(255,107,43,.1);color:var(--jotform)">SF Depth</span><span class="tag" style="background:rgba(255,107,43,.08);color:rgba(255,107,43,.7)">FedRAMP</span></td><td><span class="badge badge-danger">HIGH</span></td><td><span class="chevron">›</span></td></tr>
+          <tr class="comp-row" onclick="show('typeform')"><td><div class="comp-name"><div class="color-dot" style="background:var(--typeform)"></div>Typeform</div></td><td style="color:var(--muted);font-size:12px">Beautiful, conversational data intake</td><td><span class="tag" style="background:rgba(192,132,252,.1);color:var(--typeform)">HIPAA</span><span class="tag" style="background:rgba(192,132,252,.08);color:rgba(192,132,252,.7)">Scale Pricing</span></td><td><span class="badge badge-warn">MEDIUM</span></td><td><span class="chevron">›</span></td></tr>
+          <tr class="comp-row" onclick="show('formstack')"><td><div class="comp-name"><div class="color-dot" style="background:var(--formstack)"></div>Formstack</div></td><td style="color:var(--muted);font-size:12px">Limits hold you back</td><td><span class="tag" style="background:rgba(74,158,255,.1);color:var(--formstack)">Unlimited</span><span class="tag" style="background:rgba(74,158,255,.08);color:rgba(74,158,255,.7)">Support</span></td><td><span class="badge badge-warn">MEDIUM</span></td><td><span class="chevron">›</span></td></tr>
+          <tr class="comp-row" onclick="show('fillout')"><td><div class="comp-name"><div class="color-dot" style="background:var(--fillout)"></div>Fillout</div></td><td style="color:var(--muted);font-size:12px">Feisty newcomer with hidden limits</td><td><span class="tag" style="background:rgba(16,185,129,.1);color:var(--fillout)">Compliance</span><span class="tag" style="background:rgba(16,185,129,.08);color:rgba(16,185,129,.7)">Enterprise Track</span></td><td><span class="badge badge-ok">LOW</span></td><td><span class="chevron">›</span></td></tr>
+          <tr class="comp-row" onclick="show('titan')"><td><div class="comp-name"><div class="color-dot" style="background:var(--titan)"></div>Titan DXP</div></td><td style="color:var(--muted);font-size:12px">Salesforce-native digital experiences</td><td><span class="tag" style="background:rgba(244,63,94,.1);color:var(--titan)">Ease of Use</span><span class="tag" style="background:rgba(244,63,94,.08);color:rgba(244,63,94,.7)">TCO</span></td><td><span class="badge badge-warn">MEDIUM</span></td><td><span class="chevron">›</span></td></tr>
+          <tr class="comp-row" onclick="show('nintex')"><td><div class="comp-name"><div class="color-dot" style="background:var(--nintex)"></div>Nintex</div></td><td style="color:var(--muted);font-size:12px">Complex with a steep learning curve</td><td><span class="tag" style="background:rgba(168,85,247,.1);color:var(--nintex)">No-Code</span><span class="tag" style="background:rgba(168,85,247,.08);color:rgba(168,85,247,.7)">Pricing</span></td><td><span class="badge badge-warn">MEDIUM</span></td><td><span class="chevron">›</span></td></tr>
+          <tr class="comp-row" onclick="show('omni')"><td><div class="comp-name"><div class="color-dot" style="background:var(--omni)"></div>OmniScript</div></td><td style="color:var(--muted);font-size:12px">Overly complex, locked into SF Sites</td><td><span class="tag" style="background:rgba(100,116,139,.1);color:var(--omni)">Simplicity</span><span class="tag" style="background:rgba(100,116,139,.08);color:rgba(100,116,139,.7)">Fai AI</span></td><td><span class="badge badge-warn">MEDIUM</span></td><td><span class="chevron">›</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════ GOOGLE FORMS ═══════════ -->
+  <div id="section-google" class="section main">
+    <div class="bc-header">
+      <div>
+        <div class="bc-name"><div class="color-dot" style="background:var(--google);width:12px;height:12px;box-shadow:0 0 12px var(--google)"></div><span style="color:var(--google)">Google Forms</span></div>
+        <div class="bc-tagline">Bundled free in Google Workspace. Excellent for simple surveys but lacks enterprise validation, Salesforce depth, and regulated-data compliance.</div>
+        <div class="bc-url">google.com/forms/about/ · Founded 2008</div>
+      </div>
+      <div class="bc-kpi"><div class="bc-kpi-val" style="color:var(--google)">$0</div><div class="bc-kpi-label">Entry Price</div></div>
+      <div class="bc-kpi"><div class="bc-kpi-val" style="color:var(--ok)">LOW</div><div class="bc-kpi-label">Threat Level</div></div>
+    </div>
+    <div class="bc-body">
+      <div class="bc-panel">
+        <div class="bc-panel-title">↑ Why They Win</div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--loss)"></div><div class="insight-text"><strong>Free for all Google Workspace users</strong> — zero procurement friction. Champions use it because it's already in their toolbox.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--loss)"></div><div class="insight-text"><strong>Zero learning curve</strong> — anyone can build a form in minutes. Hard to compete on speed-to-first-form.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--warn)"></div><div class="insight-text"><strong>Native Sheets sync</strong> — real-time data in a spreadsheet feels like a feature win for non-technical buyers.</div></div>
+      </div>
+      <div class="bc-panel">
+        <div class="bc-panel-title">↓ Where FormAssembly Wins</div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--win)"></div><div class="insight-text"><strong>Bi-directional Salesforce connector</strong> — Google requires Zapier or manual export. FA updates existing CRM records directly.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--win)"></div><div class="insight-text"><strong>Compliance (HIPAA, FedRAMP, PCI DSS Level 1)</strong> — Google Forms is NOT cleared for regulated data. Hard stop for healthcare, finance, and government.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--win)"></div><div class="insight-text"><strong>Advanced field validation + logic</strong> — FA enforces data accuracy at submission; Google cannot match conditional branching depth.</div></div>
+      </div>
+      <div class="bc-panel">
+        <div class="bc-panel-title">⚡ Claim Rebuttals</div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--google)"></div><div class="insight-text"><strong>"Professional forms in minutes"</strong> → FA provides enterprise-grade structure and design. Google forms won't pass a security review or brand audit for external use.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--google)"></div><div class="insight-text"><strong>"Analyze in Google Sheets"</strong> → Spreadsheets are data silos. FA delivers into Salesforce, HubSpot, and other systems of record — eliminating manual rework.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--google)"></div><div class="insight-text"><strong>"Collaborate to build forms together"</strong> → Collaboration ≠ governance. FA provides role-based access and audit logs for secure, compliant workflows at scale.</div></div>
+      </div>
+      <div class="bc-panel">
+        <div class="bc-panel-title">◎ Capability Scores</div>
+        <div class="score-row"><div class="score-label">Ease of Setup</div><div class="score-track"><div class="score-fill" style="width:95%;background:var(--google)"></div></div><div class="score-num" style="color:var(--google)">9.5</div></div>
+        <div class="score-row"><div class="score-label">Price Access.</div><div class="score-track"><div class="score-fill" style="width:100%;background:var(--google)"></div></div><div class="score-num" style="color:var(--google)">10</div></div>
+        <div class="score-row"><div class="score-label">SF Integration</div><div class="score-track"><div class="score-fill" style="width:20%;background:var(--loss)"></div></div><div class="score-num" style="color:var(--loss)">2</div></div>
+        <div class="score-row"><div class="score-label">Compliance</div><div class="score-track"><div class="score-fill" style="width:15%;background:var(--loss)"></div></div><div class="score-num" style="color:var(--loss)">1.5</div></div>
+        <div class="score-row"><div class="score-label">Complex Logic</div><div class="score-track"><div class="score-fill" style="width:25%;background:var(--dim)"></div></div><div class="score-num">2.5</div></div>
+      </div>
+      <div class="bc-panel bc-panel-wide">
+        <div class="bc-panel-title">💰 Pricing · google.com/workspace/pricing</div>
+        <div class="pricing-grid">
+          <div class="price-tier"><div class="price-tier-name">Personal</div><div class="price-tier-val" style="color:var(--win)">Free</div></div>
+          <div class="price-tier"><div class="price-tier-name">Biz Starter</div><div class="price-tier-val">$6<span style="font-size:10px;color:var(--muted)">/user/mo</span></div></div>
+          <div class="price-tier"><div class="price-tier-name">Biz Standard</div><div class="price-tier-val">$12<span style="font-size:10px;color:var(--muted)">/user/mo</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ MICROSOFT FORMS ═══════════ -->
+  <div id="section-microsoft" class="section main">
+    <div class="bc-header">
+      <div>
+        <div class="bc-name"><div class="color-dot" style="background:var(--microsoft);width:12px;height:12px;box-shadow:0 0 12px var(--microsoft)"></div><span style="color:var(--microsoft)">Microsoft Forms</span></div>
+        <div class="bc-tagline">Bundled in M365. Strong for internal Microsoft-ecosystem users but poor Salesforce support, limited logic, and lacks FedRAMP High / DoD IL4.</div>
+        <div class="bc-url">forms.office.com · Released 2016</div>
+      </div>
+      <div class="bc-kpi"><div class="bc-kpi-val" style="color:var(--microsoft)">$0</div><div class="bc-kpi-label">Entry Price</div></div>
+      <div class="bc-kpi"><div class="bc-kpi-val" style="color:var(--win)">LOW</div><div class="bc-kpi-label">Threat Level</div></div>
+    </div>
+    <div class="bc-body">
+      <div class="bc-panel">
+        <div class="bc-panel-title">↑ Why They Win</div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--loss)"></div><div class="insight-text"><strong>Included in M365</strong> — zero additional cost in Microsoft shops. Finance teams point to it immediately.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--loss)"></div><div class="insight-text"><strong>Deep Microsoft ecosystem</strong> — native Excel, SharePoint, Teams, and Power Automate integration resonates in Microsoft-first organizations.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--warn)"></div><div class="insight-text"><strong>AI suggestions (Copilot)</strong> — Microsoft's AI integration is a marquee feature in internal selling. Counter with FA's Fai agent.</div></div>
+      </div>
+      <div class="bc-panel">
+        <div class="bc-panel-title">↓ Where FormAssembly Wins</div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--win)"></div><div class="insight-text"><strong>FedRAMP High + DoD IL4</strong> — MS Forms basic does NOT have this clearance. Government and defense buyers cannot use it for mission-critical intake.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--win)"></div><div class="insight-text"><strong>Salesforce bi-directional sync</strong> — MS Forms only connects via Power Automate middleware. FA connects natively to any SF object, any direction.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--win)"></div><div class="insight-text"><strong>Complex conditional logic</strong> — FA handles nested branching and field-level validation at submission that MS Forms cannot match.</div></div>
+      </div>
+      <div class="bc-panel">
+        <div class="bc-panel-title">⚡ Claim Rebuttals</div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--microsoft)"></div><div class="insight-text"><strong>"Surveys for feedback and quizzes"</strong> → Mission-critical data requires more than a survey tool. FA provides enterprise field validation and HIPAA-readiness MS Forms lacks.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--microsoft)"></div><div class="insight-text"><strong>"AI does the heavy lifting"</strong> → Microsoft's AI suggests. FA's Fai actually builds entire complex workflows from a prompt while keeping humans in compliance control.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--microsoft)"></div><div class="insight-text"><strong>"Connect via Power Automate"</strong> → Power Automate adds complexity and another failure point. FA offers native, direct connectors to Salesforce and HubSpot without middleware.</div></div>
+      </div>
+      <div class="bc-panel">
+        <div class="bc-panel-title">◎ Capability Scores</div>
+        <div class="score-row"><div class="score-label">M365 Integration</div><div class="score-track"><div class="score-fill" style="width:95%;background:var(--microsoft)"></div></div><div class="score-num" style="color:var(--microsoft)">9.5</div></div>
+        <div class="score-row"><div class="score-label">Ease of Use</div><div class="score-track"><div class="score-fill" style="width:88%;background:var(--microsoft)"></div></div><div class="score-num" style="color:var(--microsoft)">8.8</div></div>
+        <div class="score-row"><div class="score-label">SF Integration</div><div class="score-track"><div class="score-fill" style="width:25%;background:var(--loss)"></div></div><div class="score-num" style="color:var(--loss)">2.5</div></div>
+        <div class="score-row"><div class="score-label">FedRAMP / DoD IL4</div><div class="score-track"><div class="score-fill" style="width:20%;background:var(--loss)"></div></div><div class="score-num" style="color:var(--loss)">2</div></div>
+        <div class="score-row"><div class="score-label">Complex Logic</div><div class="score-track"><div class="score-fill" style="width:30%;background:var(--dim)"></div></div><div class="score-num">3</div></div>
+      </div>
+      <div class="bc-panel bc-panel-wide">
+        <div class="bc-panel-title">💰 Pricing · microsoft.com/microsoft-365/business</div>
+        <div class="pricing-grid">
+          <div class="price-tier"><div class="price-tier-name">Personal</div><div class="price-tier-val" style="color:var(--win)">Free</div></div>
+          <div class="price-tier"><div class="price-tier-name">M365 Basic</div><div class="price-tier-val">$6<span style="font-size:10px;color:var(--muted)">/user/mo</span></div></div>
+          <div class="price-tier"><div class="price-tier-name">M365 Standard</div><div class="price-tier-val">$12.50<span style="font-size:10px;color:var(--muted)">/user/mo</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ HUBSPOT ═══════════ -->
+  <div id="section-hubspot" class="section main">
+    <div class="bc-header">
+      <div>
+        <div class="bc-name"><div class="color-dot" style="background:var(--hubspot);width:12px;height:12px;box-shadow:0 0 12px var(--hubspot)"></div><span style="color:var(--hubspot)">HubSpot Forms</span></div>
+        <div class="bc-tagline">Strong for marketing-led orgs. Pricing spikes aggressively with scale. HIPAA only at $3,600+/mo Enterprise. Limited conditional logic for complex intake.</div>
+        <div class="bc-url">hubspot.com · NYSE: HUBS · Founded 2006</div>
+      </div>
+      <div class="bc-kpi"><div class="bc-kpi-val" style="color:var(--win)">$0</div><div class="bc-kpi-label">Entry (Freemium)</div></div>
+      <div class="bc-kpi"><div class="bc-kpi-val" style="color:var(--warn)">MEDIUM</div><div class="bc-kpi-label">Threat Level</div></div>
+    </div>
+    <div class="bc-body">
+      <div class="bc-panel">
+        <div class="bc-panel-title">↑ Why They Win</div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--loss)"></div><div class="insight-text"><strong>All-in-one for marketing/sales teams</strong> — forms, CRM, email, automation in one platform. Procurement loves single-vendor stories.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--loss)"></div><div class="insight-text"><strong>Massive template library + ecosystem</strong> — 7,000+ employees, 200k+ customers, massive partner ecosystem adds credibility.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--warn)"></div><div class="insight-text"><strong>Native HubSpot CRM sync</strong> — no integration step for HubSpot-native organizations. Wins in marketing-led evaluations before IT gets involved.</div></div>
+      </div>
+      <div class="bc-panel">
+        <div class="bc-panel-title">↓ Where FormAssembly Wins</div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--win)"></div><div class="insight-text"><strong>HIPAA without $3,600/mo</strong> — HubSpot locks HIPAA compliance to Enterprise tier. FA provides it at a fraction of the cost.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--win)"></div><div class="insight-text"><strong>Complex conditional logic</strong> — HubSpot forms are great for 5-field lead gen. FA handles multi-page branching, repeating sections, and multi-object Salesforce mapping.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--win)"></div><div class="insight-text"><strong>Predictable pricing</strong> — HubSpot's "success tax" spikes with contact volume and feature unlocks. FA offers flat, transparent pricing as you scale.</div></div>
+      </div>
+      <div class="bc-panel">
+        <div class="bc-panel-title">⚡ Claim Rebuttals</div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--hubspot)"></div><div class="insight-text"><strong>"Natively integrated, no messy setup"</strong> → Native ≠ flexible. FA's connector allows complex record creation, lookups, and updates across standard and custom SF objects that HubSpot's basic mapping can't handle.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--hubspot)"></div><div class="insight-text"><strong>"Unified customer journey view"</strong> → HubSpot only sees its own walled garden. If data needs to live elsewhere for compliance reasons, FA is the versatile bridge — not a closed ecosystem.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--hubspot)"></div><div class="insight-text"><strong>"Drag-and-drop, anyone can build"</strong> → Ease ≠ functionality. HubSpot fails at multi-page logic, digital signatures, and HIPAA/PCI DSS compliance.</div></div>
+      </div>
+      <div class="bc-panel">
+        <div class="bc-panel-title">◎ Capability Scores</div>
+        <div class="score-row"><div class="score-label">Marketing Fit</div><div class="score-track"><div class="score-fill" style="width:92%;background:var(--hubspot)"></div></div><div class="score-num" style="color:var(--hubspot)">9.2</div></div>
+        <div class="score-row"><div class="score-label">Ease of Use</div><div class="score-track"><div class="score-fill" style="width:85%;background:var(--hubspot)"></div></div><div class="score-num" style="color:var(--hubspot)">8.5</div></div>
+        <div class="score-row"><div class="score-label">HIPAA Access</div><div class="score-track"><div class="score-fill" style="width:40%;background:var(--warn)"></div></div><div class="score-num" style="color:var(--warn)">4</div></div>
+        <div class="score-row"><div class="score-label">Complex Logic</div><div class="score-track"><div class="score-fill" style="width:45%;background:var(--dim)"></div></div><div class="score-num">4.5</div></div>
+        <div class="score-row"><div class="score-label">Price at Scale</div><div class="score-track"><div class="score-fill" style="width:35%;background:var(--loss)"></div></div><div class="score-num" style="color:var(--loss)">3.5</div></div>
+      </div>
+      <div class="bc-panel bc-panel-wide">
+        <div class="bc-panel-title">💰 Pricing · hubspot.com/pricing/marketing</div>
+        <div class="pricing-grid">
+          <div class="price-tier"><div class="price-tier-name">Free</div><div class="price-tier-val" style="color:var(--win)">$0</div></div>
+          <div class="price-tier"><div class="price-tier-name">Starter</div><div class="price-tier-val">$15+<span style="font-size:10px;color:var(--muted)">/mo</span></div></div>
+          <div class="price-tier"><div class="price-tier-name">Professional</div><div class="price-tier-val">$800+<span style="font-size:10px;color:var(--muted)">/mo</span></div></div>
+          <div class="price-tier"><div class="price-tier-name">Enterprise (HIPAA)</div><div class="price-tier-val" style="color:var(--loss)">$3,600+<span style="font-size:10px;color:var(--muted)">/mo</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ SF WEB-TO-LEAD ═══════════ -->
+  <div id="section-sfweb" class="section main">
+    <div class="bc-header">
+      <div>
+        <div class="bc-name"><div class="color-dot" style="background:var(--sfweb);width:12px;height:12px;box-shadow:0 0 12px var(--sfweb)"></div><span style="color:var(--sfweb)">Salesforce Web-to-Lead</span></div>
+        <div class="bc-tagline">Included with Salesforce CRM. Works only with Lead object. 500 lead/day limit. No file uploads. Requires dev resources to style and maintain.</div>
+        <div class="bc-url">salesforce.com · Global CRM leader · Founded 1999</div>
+      </div>
+      <div class="bc-kpi"><div class="bc-kpi-val" style="color:var(--win)">Included</div><div class="bc-kpi-label">Cost (SF bundle)</div></div>
+      <div class="bc-kpi"><div class="bc-kpi-val" style="color:var(--warn)">MEDIUM</div><div class="bc-kpi-label">Threat Level</div></div>
+    </div>
+    <div class="bc-body">
+      <div class="bc-panel">
+        <div class="bc-panel-title">↑ Why They Win</div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--loss)"></div><div class="insight-text"><strong>"Free and included"</strong> — perceived as zero cost since it's bundled with existing Salesforce licenses. Hard to compete on price alone.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--loss)"></div><div class="insight-text"><strong>Zero integration friction</strong> — data routes directly into Salesforce Leads without any connector setup. Appeals to admins wanting simplicity.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--warn)"></div><div class="insight-text"><strong>Native trust</strong> — "It's built by Salesforce" is powerful social proof in Salesforce-centric organizations.</div></div>
+      </div>
+      <div class="bc-panel">
+        <div class="bc-panel-title">↓ Where FormAssembly Wins</div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--win)"></div><div class="insight-text"><strong>Unlimited responses, any object</strong> — W2L caps at 500 leads/day and only maps to the Lead object. FA handles any standard or custom object, any volume.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--win)"></div><div class="insight-text"><strong>File uploads + malware scanning</strong> — W2L cannot accept files. FA accepts uploads, routes to Salesforce or SharePoint/Drive/Box/Dropbox, and scans for malware.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--win)"></div><div class="insight-text"><strong>HIPAA, PCI DSS, no-code builder</strong> — W2L lacks compliance certifications and requires developer resources for any styling or updates. FA is no-code and compliant.</div></div>
+      </div>
+      <div class="bc-panel">
+        <div class="bc-panel-title">⚡ Claim Rebuttals</div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--sfweb)"></div><div class="insight-text"><strong>"Free and included"</strong> → "Free" comes with high cost of ownership. W2L requires developer/admin resources for styling and updates. FA's no-code builder lets anyone launch in minutes.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--sfweb)"></div><div class="insight-text"><strong>"Securely route to CRM"</strong> → Standard W2L lacks advanced encryption and HIPAA/PCI compliance. FA provides a "Security-First" layer with sensitive data masking and End-to-End encryption.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--sfweb)"></div><div class="insight-text"><strong>"Direct native routing"</strong> → FA is a more sophisticated router. We can send to Salesforce AND any other critical system, breaking the Salesforce silo and supporting custom workflows.</div></div>
+      </div>
+      <div class="bc-panel">
+        <div class="bc-panel-title">◎ Key Limitations to Surface</div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--loss)"></div><div class="insight-text"><strong>500 Lead/day hard limit</strong> — high-traffic campaigns will silently stop capturing leads mid-day. FA offers unlimited responses with reliable composite API sync.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--loss)"></div><div class="insight-text"><strong>Lead object only</strong> — cannot map to Contacts, Accounts, Cases, or any custom object. FA maps to any standard or custom object across all clouds.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--loss)"></div><div class="insight-text"><strong>No file uploads</strong> — a complete blocker for application forms, document collection, and regulated intake workflows.</div></div>
+      </div>
+      <div class="bc-panel bc-panel-wide">
+        <div class="bc-panel-title">💰 Pricing · salesforce.com/crm/pricing/ (CRM tiers, W2L bundled)</div>
+        <div class="pricing-grid">
+          <div class="price-tier"><div class="price-tier-name">Starter Suite</div><div class="price-tier-val">$25<span style="font-size:10px;color:var(--muted)">/user/mo</span></div></div>
+          <div class="price-tier"><div class="price-tier-name">Pro Suite</div><div class="price-tier-val">$100<span style="font-size:10px;color:var(--muted)">/user/mo</span></div></div>
+          <div class="price-tier"><div class="price-tier-name">Enterprise</div><div class="price-tier-val">$175<span style="font-size:10px;color:var(--muted)">/user/mo</span></div></div>
+          <div class="price-tier"><div class="price-tier-name">Unlimited</div><div class="price-tier-val">$350<span style="font-size:10px;color:var(--muted)">/user/mo</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ JOTFORM ═══════════ -->
+  <div id="section-jotform" class="section main">
+    <div class="bc-header">
+      <div>
+        <div class="bc-name"><div class="color-dot" style="background:var(--jotform);width:12px;height:12px;box-shadow:0 0 12px var(--jotform)"></div><span style="color:var(--jotform)">Jotform</span></div>
+        <div class="bc-tagline">35M+ users. Usage-based pricing with aggressive caps. AI Agents push (2025–26). Salesforce integration is breadth not depth. HIPAA requires $129/mo Gold tier.</div>
+        <div class="bc-url">jotform.com · Founded 2006 · Bootstrapped</div>
+      </div>
+      <div class="bc-kpi"><div class="bc-kpi-val" style="color:var(--jotform)">$0–$129</div><div class="bc-kpi-label">Entry Pricing</div></div>
+      <div class="bc-kpi"><div class="bc-kpi-val" style="color:var(--loss)">HIGH</div><div class="bc-kpi-label">Threat Level</div></div>
+    </div>
+    <div class="bc-body">
+      <div class="bc-panel">
+        <div class="bc-panel-title">↑ Why They Win</div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--loss)"></div><div class="insight-text"><strong>Price anchoring</strong> — $39/mo Bronze vs. FA enterprise tiers. SMBs and nonprofits (50% discount) find it very hard to justify 3–5x cost for similar core functionality.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--loss)"></div><div class="insight-text"><strong>10,000+ templates</strong> — buyers search, find 5 that match exactly, and sign up before our demo is even scheduled.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--warn)"></div><div class="insight-text"><strong>AI Agents (2025–26)</strong> — voice + chat agent layer appearing in recent deal notes as a "future-proof" argument. Watch closely.</div></div>
+      </div>
+      <div class="bc-panel">
+        <div class="bc-panel-title">↓ Where FormAssembly Wins</div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--win)"></div><div class="insight-text"><strong>Salesforce integration depth</strong> — Jotform's SF integration lacks complex multi-object lookups. FA's bi-directional connector handles nested objects and complex logic natively.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--win)"></div><div class="insight-text"><strong>FedRAMP High + DoD IL4</strong> — Jotform is not cleared for government and defense use. These authorizations are essential for high-compliance sectors where Jotform cannot compete.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--win)"></div><div class="insight-text"><strong>Unlimited plans</strong> — Jotform's aggressive usage caps (form views, submissions, agents) can disable live forms mid-month. FA offers truly unlimited for high-traffic deployments.</div></div>
+      </div>
+      <div class="bc-panel">
+        <div class="bc-panel-title">⚡ Claim Rebuttals</div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--jotform)"></div><div class="insight-text"><strong>"Intelligent AI Agents"</strong> → Jotform's agents are chatbots overlaid on forms. True intelligence requires sophisticated logic at the integration level — FA's connectors are second to none.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--jotform)"></div><div class="insight-text"><strong>"Most powerful Salesforce integration"</strong> → Their power is limited. FA supports unlimited standard and custom object mapping and bi-directional sync that Jotform cannot match without manual cleanup.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--jotform)"></div><div class="insight-text"><strong>"Enterprise-grade HIPAA for everyone"</strong> → Jotform requires $129/mo Gold for HIPAA. FA provides a more robust posture including FedRAMP High and DoD IL4 where Jotform is not cleared.</div></div>
+      </div>
+      <div class="bc-panel">
+        <div class="bc-panel-title">◎ Capability Scores</div>
+        <div class="score-row"><div class="score-label">Template Volume</div><div class="score-track"><div class="score-fill" style="width:95%;background:var(--jotform)"></div></div><div class="score-num" style="color:var(--jotform)">9.5</div></div>
+        <div class="score-row"><div class="score-label">Pricing Access.</div><div class="score-track"><div class="score-fill" style="width:90%;background:var(--jotform)"></div></div><div class="score-num" style="color:var(--jotform)">9</div></div>
+        <div class="score-row"><div class="score-label">SF Integration</div><div class="score-track"><div class="score-fill" style="width:55%;background:var(--dim)"></div></div><div class="score-num">5.5</div></div>
+        <div class="score-row"><div class="score-label">FedRAMP / Gov</div><div class="score-track"><div class="score-fill" style="width:10%;background:var(--loss)"></div></div><div class="score-num" style="color:var(--loss)">1</div></div>
+        <div class="score-row"><div class="score-label">Unlimited Scale</div><div class="score-track"><div class="score-fill" style="width:40%;background:var(--dim)"></div></div><div class="score-num">4</div></div>
+      </div>
+      <div class="bc-panel bc-panel-wide">
+        <div class="bc-panel-title">💰 Pricing · jotform.com/pricing (usage-based, caps apply)</div>
+        <div class="pricing-grid">
+          <div class="price-tier"><div class="price-tier-name">Starter</div><div class="price-tier-val" style="color:var(--win)">$0</div></div>
+          <div class="price-tier"><div class="price-tier-name">Bronze</div><div class="price-tier-val">$39<span style="font-size:10px;color:var(--muted)">/mo</span></div></div>
+          <div class="price-tier"><div class="price-tier-name">Gold (HIPAA)</div><div class="price-tier-val" style="color:var(--warn)">$129<span style="font-size:10px;color:var(--muted)">/mo</span></div></div>
+          <div class="price-tier"><div class="price-tier-name">Enterprise</div><div class="price-tier-val">Custom</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ TYPEFORM ═══════════ -->
+  <div id="section-typeform" class="section main">
+    <div class="bc-header">
+      <div>
+        <div class="bc-name"><div class="color-dot" style="background:var(--typeform);width:12px;height:12px;box-shadow:0 0 12px var(--typeform)"></div><span style="color:var(--typeform)">Typeform</span></div>
+        <div class="bc-tagline">Premium UX, conversational one-at-a-time forms. Response-based pricing punishes scale. No HIPAA. 2025 AI Visual Logic Map is a demo standout.</div>
+        <div class="bc-url">typeform.com · Founded 2012 · Barcelona</div>
+      </div>
+      <div class="bc-kpi"><div class="bc-kpi-val" style="color:var(--typeform)">$25–$83</div><div class="bc-kpi-label">Entry Pricing</div></div>
+      <div class="bc-kpi"><div class="bc-kpi-val" style="color:var(--warn)">MEDIUM</div><div class="bc-kpi-label">Threat Level</div></div>
+    </div>
+    <div class="bc-body">
+      <div class="bc-panel">
+        <div class="bc-panel-title">↑ Why They Win</div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--loss)"></div><div class="insight-text"><strong>Brand prestige signal</strong> — Marketing teams choose Typeform for aesthetics. G2 reviewers compare it to Figma and Canva in quality. Aspirational brand association.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--loss)"></div><div class="insight-text"><strong>Conversational UX = higher completion</strong> — measurably higher completion rates on simple lead gen forms. Hard to argue against in short evaluations.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--warn)"></div><div class="insight-text"><strong>2025 AI Visual Logic Map</strong> — appeared in deal notes as a "wow moment" in demos. Non-technical users build complex conditional paths visually. Counter with Fai.</div></div>
+      </div>
+      <div class="bc-panel">
+        <div class="bc-panel-title">↓ Where FormAssembly Wins</div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--win)"></div><div class="insight-text"><strong>HIPAA — full stop</strong> — Typeform does NOT offer HIPAA or BAA. This is a hard stop for healthcare, finance, and regulated buyers. Surface this early in technical discussions.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--win)"></div><div class="insight-text"><strong>Pricing predictability</strong> — Typeform's per-response pricing surprises buyers at scale. G2 reviews call it "wolf in sheep's clothing pricing." FA wins on flat seat-based clarity.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--win)"></div><div class="insight-text"><strong>Enterprise volume + complex logic</strong> — "one-question-at-a-time" is tedious for multi-page applications. FA provides flexible layouts, matrices, repeating sections for technical workflows.</div></div>
+      </div>
+      <div class="bc-panel">
+        <div class="bc-panel-title">⚡ Claim Rebuttals</div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--typeform)"></div><div class="insight-text"><strong>"Get more responses, conversational UX"</strong> → High engagement is good for marketing; inefficient for complex business processes. FA's multi-page layouts handle high-density data collection far better.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--typeform)"></div><div class="insight-text"><strong>"Beautiful on-brand forms without code"</strong> → Aesthetics matter, but data integrity matters more. Typeform focuses on how a form looks; FA focuses on how the data works — validated and structured for enterprise systems.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--typeform)"></div><div class="insight-text"><strong>"AI builds forms in seconds"</strong> → Typeform's AI is built for speed. FA's Fai is built for sophistication — builds workflows, maps integrations, and advises on compliance standards.</div></div>
+      </div>
+      <div class="bc-panel">
+        <div class="bc-panel-title">◎ Capability Scores</div>
+        <div class="score-row"><div class="score-label">UX / Design</div><div class="score-track"><div class="score-fill" style="width:95%;background:var(--typeform)"></div></div><div class="score-num" style="color:var(--typeform)">9.5</div></div>
+        <div class="score-row"><div class="score-label">AI Features</div><div class="score-track"><div class="score-fill" style="width:80%;background:var(--typeform)"></div></div><div class="score-num" style="color:var(--typeform)">8</div></div>
+        <div class="score-row"><div class="score-label">HIPAA</div><div class="score-track"><div class="score-fill" style="width:5%;background:var(--loss)"></div></div><div class="score-num" style="color:var(--loss)">0</div></div>
+        <div class="score-row"><div class="score-label">Pricing at Scale</div><div class="score-track"><div class="score-fill" style="width:35%;background:var(--loss)"></div></div><div class="score-num" style="color:var(--loss)">3.5</div></div>
+        <div class="score-row"><div class="score-label">Complex Logic</div><div class="score-track"><div class="score-fill" style="width:45%;background:var(--dim)"></div></div><div class="score-num">4.5</div></div>
+      </div>
+      <div class="bc-panel bc-panel-wide">
+        <div class="bc-panel-title">💰 Pricing · typeform.com/pricing (response-based, watch the cap)</div>
+        <div class="pricing-grid">
+          <div class="price-tier"><div class="price-tier-name">Basic (100 resp/mo)</div><div class="price-tier-val">$25<span style="font-size:10px;color:var(--muted)">/mo</span></div></div>
+          <div class="price-tier"><div class="price-tier-name">Plus (1k resp)</div><div class="price-tier-val">$50<span style="font-size:10px;color:var(--muted)">/mo</span></div></div>
+          <div class="price-tier"><div class="price-tier-name">Business (10k resp)</div><div class="price-tier-val">$83<span style="font-size:10px;color:var(--muted)">/mo</span></div></div>
+          <div class="price-tier"><div class="price-tier-name">Marketer</div><div class="price-tier-val">$266<span style="font-size:10px;color:var(--muted)">/mo</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ FORMSTACK ═══════════ -->
+  <div id="section-formstack" class="section main">
+    <div class="bc-header">
+      <div>
+        <div class="bc-name"><div class="color-dot" style="background:var(--formstack);width:12px;height:12px;box-shadow:0 0 12px var(--formstack)"></div><span style="color:var(--formstack)">Formstack</span></div>
+        <div class="bc-tagline">Workplace productivity platform with Forms + Documents + Sign. Acquired product suite that doesn't feel unified. Limits on responses, SF objects, and forms penalize growth.</div>
+        <div class="bc-url">formstack.com · Founded 2006 · 25,000+ orgs</div>
+      </div>
+      <div class="bc-kpi"><div class="bc-kpi-val" style="color:var(--formstack)">$59–$650</div><div class="bc-kpi-label">Pricing Range</div></div>
+      <div class="bc-kpi"><div class="bc-kpi-val" style="color:var(--warn)">MEDIUM</div><div class="bc-kpi-label">Threat Level</div></div>
+    </div>
+    <div class="bc-body">
+      <div class="bc-panel">
+        <div class="bc-panel-title">↑ Why They Win</div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--loss)"></div><div class="insight-text"><strong>Native Salesforce AppExchange app</strong> — strong SF positioning wins in technical evaluations with SF-heavy orgs.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--loss)"></div><div class="insight-text"><strong>Forms + Documents + eSign bundle</strong> — all-in-one pitch at $229/mo Suite tier lands well in ops-heavy buyers looking for fewer vendors.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--warn)"></div><div class="insight-text"><strong>HIPAA available</strong> — included in higher tiers, which helps them win in regulated verticals where they outposition Google/MS Forms.</div></div>
+      </div>
+      <div class="bc-panel">
+        <div class="bc-panel-title">↓ Where FormAssembly Wins</div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--win)"></div><div class="insight-text"><strong>Truly unlimited</strong> — every FA account gets unlimited forms, unlimited responses, unlimited integrations. Formstack caps all three on lower tiers and penalizes growth.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--win)"></div><div class="insight-text"><strong>98% CSAT, award-winning support</strong> — Formstack's weak onboarding and support is a documented G2 complaint. FA includes onboarding packages and 24/5 support.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--win)"></div><div class="insight-text"><strong>Simpler, transparent pricing</strong> — Formstack has complex, multi-product pricing across Forms, Docs, Sign, and Salesforce tiers. FA's plans are straightforward and predictable.</div></div>
+      </div>
+      <div class="bc-panel">
+        <div class="bc-panel-title">⚡ Claim Rebuttals</div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--formstack)"></div><div class="insight-text"><strong>"No-code, streamline data capture + docs + eSign"</strong> → Formstack's "Suite" is acquired products stitched together with an API. It doesn't feel like a singular product — users that switch cite this confusion frequently.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--formstack)"></div><div class="insight-text"><strong>"Anyone can reimagine processes without code"</strong> → FA users who switched find FormAssembly easier to use, with better training resources and more responsive support than Formstack's "Co-pilot" experience.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--formstack)"></div><div class="insight-text"><strong>"100+ integrations"</strong> → FA prioritizes quality over quantity. Our Salesforce connector is a primary reason users switch from Formstack — it's deeper, more reliable, and more flexible.</div></div>
+      </div>
+      <div class="bc-panel">
+        <div class="bc-panel-title">◎ Capability Scores</div>
+        <div class="score-row"><div class="score-label">SF Native App</div><div class="score-track"><div class="score-fill" style="width:88%;background:var(--formstack)"></div></div><div class="score-num" style="color:var(--formstack)">8.8</div></div>
+        <div class="score-row"><div class="score-label">Product Bundle</div><div class="score-track"><div class="score-fill" style="width:75%;background:var(--formstack)"></div></div><div class="score-num" style="color:var(--formstack)">7.5</div></div>
+        <div class="score-row"><div class="score-label">Unlimited Scale</div><div class="score-track"><div class="score-fill" style="width:30%;background:var(--loss)"></div></div><div class="score-num" style="color:var(--loss)">3</div></div>
+        <div class="score-row"><div class="score-label">Support Quality</div><div class="score-track"><div class="score-fill" style="width:45%;background:var(--dim)"></div></div><div class="score-num">4.5</div></div>
+        <div class="score-row"><div class="score-label">Pricing Clarity</div><div class="score-track"><div class="score-fill" style="width:40%;background:var(--dim)"></div></div><div class="score-num">4</div></div>
+      </div>
+      <div class="bc-panel bc-panel-wide">
+        <div class="bc-panel-title">💰 Pricing · formstack.com/pricing</div>
+        <div class="pricing-grid">
+          <div class="price-tier"><div class="price-tier-name">Forms Only</div><div class="price-tier-val">$59<span style="font-size:10px;color:var(--muted)">/mo</span></div></div>
+          <div class="price-tier"><div class="price-tier-name">Suite</div><div class="price-tier-val">$229<span style="font-size:10px;color:var(--muted)">/mo</span></div></div>
+          <div class="price-tier"><div class="price-tier-name">Starter (SFDC)</div><div class="price-tier-val">$250<span style="font-size:10px;color:var(--muted)">/mo</span></div></div>
+          <div class="price-tier"><div class="price-tier-name">Pro</div><div class="price-tier-val">$650<span style="font-size:10px;color:var(--muted)">/mo</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ FILLOUT ═══════════ -->
+  <div id="section-fillout" class="section main">
+    <div class="bc-header">
+      <div>
+        <div class="bc-name"><div class="color-dot" style="background:var(--fillout);width:12px;height:12px;box-shadow:0 0 12px var(--fillout)"></div><span style="color:var(--fillout)">Fillout</span></div>
+        <div class="bc-tagline">Chicago startup (2022). Modern UI, strong Airtable/Notion integrations. Hidden costs from response/integration credits. No HIPAA or FedRAMP. Aggressive discounting tactic.</div>
+        <div class="bc-url">fillout.com · Founded 2022 · Backed by BoxGroup</div>
+      </div>
+      <div class="bc-kpi"><div class="bc-kpi-val" style="color:var(--fillout)">$15–$250</div><div class="bc-kpi-label">Pricing Range</div></div>
+      <div class="bc-kpi"><div class="bc-kpi-val" style="color:var(--win)">LOW</div><div class="bc-kpi-label">Threat Level</div></div>
+    </div>
+    <div class="bc-body">
+      <div class="bc-panel">
+        <div class="bc-panel-title">↑ Why They Win</div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--loss)"></div><div class="insight-text"><strong>Airtable + Notion native integrations</strong> — unique positioning for no-code/ops teams that live in these tools. FA doesn't compete here directly.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--loss)"></div><div class="insight-text"><strong>Modern, clean UI</strong> — fast drag-and-drop with built-in scheduling/booking. Appears simpler and more modern than legacy form builders in demos.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--warn)"></div><div class="insight-text"><strong>Steep discounting from competitors</strong> — actively offers discounts when prospects are moving from another tool. Know this going into competitive deals.</div></div>
+      </div>
+      <div class="bc-panel">
+        <div class="bc-panel-title">↓ Where FormAssembly Wins</div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--win)"></div><div class="insight-text"><strong>HIPAA + FedRAMP — 15+ years of compliance</strong> — Fillout launched in 2022. FA has a 15+ year track record with HIPAA, SOC 2 Type II, and PCI DSS Level 1. Lower risk for regulated industries.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--win)"></div><div class="insight-text"><strong>Unlimited forms + responses + integrations</strong> — Fillout's response and integration credit limits can become cost-prohibitive at scale. FA's plans are built for high-volume without surprise charges.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--win)"></div><div class="insight-text"><strong>Complex enterprise workflow logic</strong> — FA's Workflow Engine handles intricate conditional branching and multi-person approval loops that Fillout's linear, database-focused logic cannot match.</div></div>
+      </div>
+      <div class="bc-panel">
+        <div class="bc-panel-title">⚡ Claim Rebuttals</div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--fillout)"></div><div class="insight-text"><strong>"Build in minutes, lightning-fast interface"</strong> → Speed doesn't equal power. FA handles heavy lifting — complex nested logic, industrial workflows — where Fillout hits its ceiling on responses, integration credits, and more.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--fillout)"></div><div class="insight-text"><strong>"Enterprise-grade security for everyone"</strong> → Fillout is new (2022). FA has 15+ years of proven compliance including HIPAA, SOC 2 Type II, PCI DSS Level 1. Track record and dedicated security team offer far lower risk.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--fillout)"></div><div class="insight-text"><strong>"Seamlessly integrate with Salesforce in real-time"</strong> → FA's Salesforce integration is the deepest in the market, supporting complex prefill, multiple object mapping, and sophisticated logic that ensures data integrity across custom objects.</div></div>
+      </div>
+      <div class="bc-panel">
+        <div class="bc-panel-title">◎ Capability Scores</div>
+        <div class="score-row"><div class="score-label">UI Modernity</div><div class="score-track"><div class="score-fill" style="width:88%;background:var(--fillout)"></div></div><div class="score-num" style="color:var(--fillout)">8.8</div></div>
+        <div class="score-row"><div class="score-label">Airtable/Notion</div><div class="score-track"><div class="score-fill" style="width:95%;background:var(--fillout)"></div></div><div class="score-num" style="color:var(--fillout)">9.5</div></div>
+        <div class="score-row"><div class="score-label">HIPAA / Compliance</div><div class="score-track"><div class="score-fill" style="width:15%;background:var(--loss)"></div></div><div class="score-num" style="color:var(--loss)">1.5</div></div>
+        <div class="score-row"><div class="score-label">Unlimited Scale</div><div class="score-track"><div class="score-fill" style="width:35%;background:var(--loss)"></div></div><div class="score-num" style="color:var(--loss)">3.5</div></div>
+        <div class="score-row"><div class="score-label">Enterprise Logic</div><div class="score-track"><div class="score-fill" style="width:40%;background:var(--dim)"></div></div><div class="score-num">4</div></div>
+      </div>
+      <div class="bc-panel bc-panel-wide">
+        <div class="bc-panel-title">💰 Pricing · fillout.com/pricing (watch integration credit costs)</div>
+        <div class="pricing-grid">
+          <div class="price-tier"><div class="price-tier-name">Free (1k resp)</div><div class="price-tier-val" style="color:var(--win)">$0</div></div>
+          <div class="price-tier"><div class="price-tier-name">Starter</div><div class="price-tier-val">$15<span style="font-size:10px;color:var(--muted)">/mo</span></div></div>
+          <div class="price-tier"><div class="price-tier-name">Business</div><div class="price-tier-val">$75<span style="font-size:10px;color:var(--muted)">/mo</span></div></div>
+          <div class="price-tier"><div class="price-tier-name">Team</div><div class="price-tier-val">$250<span style="font-size:10px;color:var(--muted)">/mo</span></div></div>
+          <div class="price-tier"><div class="price-tier-name">Enterprise</div><div class="price-tier-val">$2.5–5k+<span style="font-size:10px;color:var(--muted)">/yr</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ TITAN DXP ═══════════ -->
+  <div id="section-titan" class="section main">
+    <div class="bc-header">
+      <div>
+        <div class="bc-name"><div class="color-dot" style="background:var(--titan);width:12px;height:12px;box-shadow:0 0 12px var(--titan)"></div><span style="color:var(--titan)">Titan DXP</span></div>
+        <div class="bc-tagline">Formerly FormTitan. Salesforce-first no-code platform (Web, DocGen, eSign). G2 users cite "befuddling" UI. High entry price. Rigidly tied to Salesforce only.</div>
+        <div class="bc-url">titandxp.com · Rebranded from FormTitan</div>
+      </div>
+      <div class="bc-kpi"><div class="bc-kpi-val" style="color:var(--titan)">$150–$5k+</div><div class="bc-kpi-label">Est. Pricing</div></div>
+      <div class="bc-kpi"><div class="bc-kpi-val" style="color:var(--warn)">MEDIUM</div><div class="bc-kpi-label">Threat Level</div></div>
+    </div>
+    <div class="bc-body">
+      <div class="bc-panel">
+        <div class="bc-panel-title">↑ Why They Win</div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--loss)"></div><div class="insight-text"><strong>Deepest Salesforce integration</strong> — Grid views, bulk edits, many-to-many relationships. Wins in highly technical SF evaluations with experienced admins.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--loss)"></div><div class="insight-text"><strong>Broad feature set in one UI</strong> — Portals, DocGen, eSign. "One platform" pitch is compelling in enterprise accounts trying to reduce vendor count.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--warn)"></div><div class="insight-text"><strong>Bi-directional real-time sync</strong> — fast, robust, reliable for Salesforce. Can be hard to counter on pure technical capability in SF-only evaluations.</div></div>
+      </div>
+      <div class="bc-panel">
+        <div class="bc-panel-title">↓ Where FormAssembly Wins</div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--win)"></div><div class="insight-text"><strong>Ease of use — 5x faster to deploy</strong> — Titan's UI is documented as "befuddling" and technical on G2. FA's clean interface and Fai AI allow teams to deploy and update workflows in minutes, not days.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--win)"></div><div class="insight-text"><strong>Not Salesforce-only</strong> — Titan is rigidly tied to SF. FA is a versatile Data Intake Cloud that supports HubSpot, Google, Microsoft, and others as your stack evolves.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--win)"></div><div class="insight-text"><strong>Transparent pricing, no "nickel and diming"</strong> — Titan's modular pricing for each product (Web + DocGen + Sign) adds up fast. FA offers transparent, enterprise-aligned pricing without hidden costs.</div></div>
+      </div>
+      <div class="bc-panel">
+        <div class="bc-panel-title">⚡ Claim Rebuttals</div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--titan)"></div><div class="insight-text"><strong>"Salesforce-native experience"</strong> → "Native" = "Complex and Limited." Titan requires deep Salesforce knowledge. FA Atlas provides an intuitive, agile layer that works with Salesforce without the rigid technical overhead.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--titan)"></div><div class="insight-text"><strong>"One platform for forms, docs, eSign, portals"</strong> → G2 reviews say it's notoriously hard to get these features working together — many rely heavily on Titan support. FA's no-code setup requires no IT or training.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--titan)"></div><div class="insight-text"><strong>"No-code for complex Salesforce objects"</strong> → Titan's "no-code" feels like low-code due to complex UI. FA's Fai allows users to build these same complex relationships through natural language — accessible to business users, not just developers.</div></div>
+      </div>
+      <div class="bc-panel">
+        <div class="bc-panel-title">◎ Capability Scores</div>
+        <div class="score-row"><div class="score-label">SF Integration</div><div class="score-track"><div class="score-fill" style="width:95%;background:var(--titan)"></div></div><div class="score-num" style="color:var(--titan)">9.5</div></div>
+        <div class="score-row"><div class="score-label">Feature Breadth</div><div class="score-track"><div class="score-fill" style="width:88%;background:var(--titan)"></div></div><div class="score-num" style="color:var(--titan)">8.8</div></div>
+        <div class="score-row"><div class="score-label">Ease of Use</div><div class="score-track"><div class="score-fill" style="width:35%;background:var(--loss)"></div></div><div class="score-num" style="color:var(--loss)">3.5</div></div>
+        <div class="score-row"><div class="score-label">Non-SF Flexibility</div><div class="score-track"><div class="score-fill" style="width:30%;background:var(--loss)"></div></div><div class="score-num" style="color:var(--loss)">3</div></div>
+        <div class="score-row"><div class="score-label">Pricing Clarity</div><div class="score-track"><div class="score-fill" style="width:35%;background:var(--dim)"></div></div><div class="score-num">3.5</div></div>
+      </div>
+      <div class="bc-panel bc-panel-wide">
+        <div class="bc-panel-title">💰 Pricing · titandxp.com/pricing (high entry, modular add-ons)</div>
+        <div class="pricing-grid">
+          <div class="price-tier"><div class="price-tier-name">Single User/Product</div><div class="price-tier-val">$150–$450<span style="font-size:10px;color:var(--muted)">/mo est.</span></div></div>
+          <div class="price-tier"><div class="price-tier-name">Business Bundle</div><div class="price-tier-val">$600–$1.5k+<span style="font-size:10px;color:var(--muted)">/mo est.</span></div></div>
+          <div class="price-tier"><div class="price-tier-name">Unlimited DXP</div><div class="price-tier-val" style="color:var(--loss)">$2.5–5k+<span style="font-size:10px;color:var(--muted)">/mo est.</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ NINTEX ═══════════ -->
+  <div id="section-nintex" class="section main">
+    <div class="bc-header">
+      <div>
+        <div class="bc-name"><div class="color-dot" style="background:var(--nintex);width:12px;height:12px;box-shadow:0 0 12px var(--nintex)"></div><span style="color:var(--nintex)">Nintex</span></div>
+        <div class="bc-tagline">Process automation platform for enterprise. Avg ASP $20k. Requires professional services/partner for implementation. Complex "State Machine" workflows. Forms not a primary focus.</div>
+        <div class="bc-url">nintex.com · Founded 2006 · 7,000+ orgs, 100+ countries</div>
+      </div>
+      <div class="bc-kpi"><div class="bc-kpi-val" style="color:var(--nintex)">~$20k</div><div class="bc-kpi-label">Avg. ASP</div></div>
+      <div class="bc-kpi"><div class="bc-kpi-val" style="color:var(--warn)">MEDIUM</div><div class="bc-kpi-label">Threat Level</div></div>
+    </div>
+    <div class="bc-body">
+      <div class="bc-panel">
+        <div class="bc-panel-title">↑ Why They Win</div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--loss)"></div><div class="insight-text"><strong>Robust workflow logic + process automation</strong> — 7,000+ enterprise customers, extensive process orchestration. Strong in regulated industries that need complex workflow governance.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--loss)"></div><div class="insight-text"><strong>Cross-platform process management</strong> — Microsoft, Salesforce, SAP ecosystem coverage. Appeals to large orgs with complex, multi-system process requirements.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--warn)"></div><div class="insight-text"><strong>Salesforce-native document generation</strong> — Nintex for Salesforce is a known enterprise solution that procurement teams shortlist alongside FA.</div></div>
+      </div>
+      <div class="bc-panel">
+        <div class="bc-panel-title">↓ Where FormAssembly Wins</div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--win)"></div><div class="insight-text"><strong>True no-code — no implementation partner required</strong> — Nintex requires specialized knowledge, "State Machines," and often implementation consultants at 30–80% of first-year cost. FA is genuinely no-code.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--win)"></div><div class="insight-text"><strong>Data governance, not just process governance</strong> — Nintex governs process (who did what step). FA governs the data itself — ensuring it's secure, validated, and accurate before it enters any system.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--win)"></div><div class="insight-text"><strong>Predictable pricing for documents + workflows</strong> — Nintex "Workflow Cloud" bills per execution and document. FA offers unlimited workflows and predictable costs for document generation.</div></div>
+      </div>
+      <div class="bc-panel">
+        <div class="bc-panel-title">⚡ Claim Rebuttals</div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--nintex)"></div><div class="insight-text"><strong>"No-code platform for business users"</strong> → Nintex is actually "Low-Code/High-Complexity." Getting a workflow to function at scale requires understanding State Machines, variables, and complex logic. FormAssembly is true no-code.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--nintex)"></div><div class="insight-text"><strong>"Unified platform, end to data silos"</strong> → Nintex's platform becomes its own silo for Salesforce data. FA feeds directly into your system of record rather than creating another layer.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--nintex)"></div><div class="insight-text"><strong>"End-to-End Governance"</strong> → Nintex focuses on Process Governance (who did what step). FA focuses on Data Governance (is the data itself secure?). Both matter — but FA's approach is more directly tied to compliance outcomes.</div></div>
+      </div>
+      <div class="bc-panel">
+        <div class="bc-panel-title">◎ Capability Scores</div>
+        <div class="score-row"><div class="score-label">Process Automation</div><div class="score-track"><div class="score-fill" style="width:92%;background:var(--nintex)"></div></div><div class="score-num" style="color:var(--nintex)">9.2</div></div>
+        <div class="score-row"><div class="score-label">Cross-Platform</div><div class="score-track"><div class="score-fill" style="width:88%;background:var(--nintex)"></div></div><div class="score-num" style="color:var(--nintex)">8.8</div></div>
+        <div class="score-row"><div class="score-label">Ease of Use</div><div class="score-track"><div class="score-fill" style="width:30%;background:var(--loss)"></div></div><div class="score-num" style="color:var(--loss)">3</div></div>
+        <div class="score-row"><div class="score-label">Form Focus</div><div class="score-track"><div class="score-fill" style="width:35%;background:var(--dim)"></div></div><div class="score-num">3.5</div></div>
+        <div class="score-row"><div class="score-label">Price Access.</div><div class="score-track"><div class="score-fill" style="width:25%;background:var(--loss)"></div></div><div class="score-num" style="color:var(--loss)">2.5</div></div>
+      </div>
+      <div class="bc-panel bc-panel-wide">
+        <div class="bc-panel-title">💰 Pricing · nintex.com (custom, no public pricing)</div>
+        <div class="pricing-grid">
+          <div class="price-tier"><div class="price-tier-name">Entry</div><div class="price-tier-val">~$16k<span style="font-size:10px;color:var(--muted)">/yr (40 seats)</span></div></div>
+          <div class="price-tier"><div class="price-tier-name">Avg. ASP</div><div class="price-tier-val">~$20k<span style="font-size:10px;color:var(--muted)">/yr</span></div></div>
+          <div class="price-tier"><div class="price-tier-name">Professional Svcs</div><div class="price-tier-val" style="color:var(--warn)">30–80%<span style="font-size:10px;color:var(--muted)"> of yr 1 cost</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ OMNISCRIPT ═══════════ -->
+  <div id="section-omni" class="section main">
+    <div class="bc-header">
+      <div>
+        <div class="bc-name"><div class="color-dot" style="background:var(--omni);width:12px;height:12px;box-shadow:0 0 12px var(--omni)"></div><span style="color:var(--omni)">OmniScript / OmniStudio</span></div>
+        <div class="bc-tagline">Acquired from Vlocity ($1.33B, 2020). Salesforce Industry Cloud UI engine. Requires specialized certification. Locked to Salesforce Experience Sites. High TCO.</div>
+        <div class="bc-url">salesforce.com/industries/omnistudio · Formerly Vlocity</div>
+      </div>
+      <div class="bc-kpi"><div class="bc-kpi-val" style="color:var(--omni)">~$10k</div><div class="bc-kpi-label">Add-on Est.</div></div>
+      <div class="bc-kpi"><div class="bc-kpi-val" style="color:var(--warn)">MEDIUM</div><div class="bc-kpi-label">Threat Level</div></div>
+    </div>
+    <div class="bc-body">
+      <div class="bc-panel">
+        <div class="bc-panel-title">↑ Why They Win</div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--loss)"></div><div class="insight-text"><strong>Native Salesforce Industry Cloud</strong> — bundled in Health Cloud, Financial Services Cloud, etc. Wins when a customer buys an industry cloud and gets it "included."</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--loss)"></div><div class="insight-text"><strong>Advanced UI/UX with Lightning Web Components</strong> — highly customizable experience for technical SF developers who want pixel-perfect portals.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--warn)"></div><div class="insight-text"><strong>High-volume document generation</strong> — integrated DocGen within SF workflows is a strong pull for orgs doing complex document assembly natively inside Salesforce.</div></div>
+      </div>
+      <div class="bc-panel">
+        <div class="bc-panel-title">↓ Where FormAssembly Wins</div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--win)"></div><div class="insight-text"><strong>True no-code, no Vlocity certification needed</strong> — OmniScript requires specialized certification to build or maintain workflows. FA is built for any business user without IT dependency.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--win)"></div><div class="insight-text"><strong>Works outside Salesforce</strong> — OmniScript is locked to Salesforce Experience Sites. FA can collect data anywhere — any website, email embed, or portal — and route to Salesforce or any other system.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--win)"></div><div class="insight-text"><strong>Lower TCO — no "Omni-call" limits or re-compilation errors</strong> — OmniScript has usage limits and fragile deployment cycles. FA's forms are dependable, easy to update, test, and revert.</div></div>
+      </div>
+      <div class="bc-panel">
+        <div class="bc-panel-title">⚡ Claim Rebuttals</div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--omni)"></div><div class="insight-text"><strong>"Low-code consumer-grade workflows"</strong> → While "low-code," OmniScript requires steep learning curve and specialized Vlocity/OmniStudio certification. FA enables any business user to launch complex branded workflows in minutes, not weeks.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--omni)"></div><div class="insight-text"><strong>"Visually map and transform Salesforce data"</strong> → OmniScript's DataMappers add architectural layers that increase maintenance. FA's native connector provides direct, granular mapping to any object without the middleman.</div></div>
+        <div class="insight-row"><div class="insight-marker" style="background:var(--omni)"></div><div class="insight-text"><strong>"Faster performance with server-side processing"</strong> → Bundle-heavy processing can cause latency. FA's lightweight, cloud-agnostic architecture ensures rapid load times without taxing your SF instance's governor limits.</div></div>
+      </div>
+      <div class="bc-panel">
+        <div class="bc-panel-title">◎ Capability Scores</div>
+        <div class="score-row"><div class="score-label">SF Industry Native</div><div class="score-track"><div class="score-fill" style="width:95%;background:var(--omni)"></div></div><div class="score-num" style="color:var(--omni)">9.5</div></div>
+        <div class="score-row"><div class="score-label">LWC Customization</div><div class="score-track"><div class="score-fill" style="width:90%;background:var(--omni)"></div></div><div class="score-num" style="color:var(--omni)">9</div></div>
+        <div class="score-row"><div class="score-label">Ease of Use</div><div class="score-track"><div class="score-fill" style="width:20%;background:var(--loss)"></div></div><div class="score-num" style="color:var(--loss)">2</div></div>
+        <div class="score-row"><div class="score-label">Non-SF Flexibility</div><div class="score-track"><div class="score-fill" style="width:10%;background:var(--loss)"></div></div><div class="score-num" style="color:var(--loss)">1</div></div>
+        <div class="score-row"><div class="score-label">TCO / Simplicity</div><div class="score-track"><div class="score-fill" style="width:25%;background:var(--dim)"></div></div><div class="score-num">2.5</div></div>
+      </div>
+      <div class="bc-panel bc-panel-wide">
+        <div class="bc-panel-title">💰 Pricing · bundled in Salesforce Industry Clouds</div>
+        <div class="pricing-grid">
+          <div class="price-tier"><div class="price-tier-name">Industry Cloud (bundled)</div><div class="price-tier-val">Included</div></div>
+          <div class="price-tier"><div class="price-tier-name">Add-on (Ent/Unltd)</div><div class="price-tier-val">~$10k<span style="font-size:10px;color:var(--muted)">/yr est.</span></div></div>
+          <div class="price-tier"><div class="price-tier-name">+ Implementation Costs</div><div class="price-tier-val" style="color:var(--loss)">Significant</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /layout -->
+
+<script>
+function show(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const sec = document.getElementById('section-' + id);
+  if (sec) sec.classList.add('active');
+  // Find matching nav item by onclick attribute
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.getAttribute('onclick') && n.getAttribute('onclick').includes("'" + id + "'")) {
+      n.classList.add('active');
+    }
+  });
+  // Scroll main back to top
+  const main = document.querySelector('.main.active') || sec;
+  if (main) main.scrollTop = 0;
+}
+</script>
+</body>
+</html>
