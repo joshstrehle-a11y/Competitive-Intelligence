@@ -1,0 +1,1397 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #0a0a0b;
+    --bg2: #111113;
+    --bg3: #18181c;
+    --border: #222228;
+    --border2: #2e2e38;
+    --text: #e8e8f0;
+    --muted: #6b6b80;
+    --dim: #3a3a48;
+    --jotform: #ff6b2b;
+    --formstack: #4a9eff;
+    --typeform: #c084fc;
+    --win: #22c55e;
+    --loss: #ef4444;
+    --warn: #f59e0b;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  /* TOP BAR */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(8px);
+  }
+
+  .logo {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--win);
+    box-shadow: 0 0 8px var(--win);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .topbar-right {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+  }
+
+  .stat-chip {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .stat-chip b {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  /* LAYOUT */
+  .layout {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    min-height: calc(100vh - 49px);
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    border-right: 1px solid var(--border);
+    padding: 20px 0;
+    background: var(--bg);
+  }
+
+  .sidebar-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--dim);
+    padding: 0 16px 10px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+    border-left: 2px solid transparent;
+    position: relative;
+  }
+
+  .nav-item:hover { background: var(--bg2); }
+
+  .nav-item.active {
+    border-left-color: currentColor;
+    background: var(--bg2);
+  }
+
+  .nav-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .nav-name {
+    font-weight: 500;
+    font-size: 13px;
+    flex: 1;
+  }
+
+  .nav-count {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    background: var(--bg3);
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+
+  .nav-loss {
+    font-family: var(--mono);
+    font-size: 9px;
+    margin-left: auto;
+  }
+
+  .sidebar-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 12px 16px;
+  }
+
+  .sidebar-meta {
+    padding: 8px 16px;
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--dim);
+    line-height: 1.8;
+  }
+
+  /* MAIN */
+  .main { overflow-y: auto; }
+
+  /* OVERVIEW */
+  .section { display: none; }
+  .section.active { display: block; }
+
+  .page-header {
+    padding: 28px 32px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .page-title {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .page-sub {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: var(--mono);
+  }
+
+  /* METRIC ROW */
+  .metrics-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .metric-cell {
+    padding: 20px 28px;
+    border-right: 1px solid var(--border);
+  }
+
+  .metric-cell:last-child { border-right: none; }
+
+  .metric-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .metric-value {
+    font-size: 26px;
+    font-weight: 600;
+    font-family: var(--mono);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .metric-sub {
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  /* COMPETITOR TABLE */
+  .table-section {
+    padding: 24px 32px;
+  }
+
+  .section-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .comp-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .comp-table th {
+    text-align: left;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--dim);
+    padding: 0 0 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .comp-table td {
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+
+  .comp-table tr:last-child td { border-bottom: none; }
+
+  .comp-row { cursor: pointer; transition: background 0.1s; }
+  .comp-row:hover td { background: rgba(255,255,255,0.02); }
+
+  .comp-name {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+    font-size: 14px;
+  }
+
+  .color-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .bar-cell { width: 140px; }
+
+  .bar-wrap {
+    height: 4px;
+    background: var(--bg3);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 4px;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 1s cubic-bezier(0.16,1,0.3,1);
+  }
+
+  .bar-pct {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
+    gap: 4px;
+  }
+
+  .badge-danger { background: rgba(239,68,68,0.12); color: var(--loss); border: 1px solid rgba(239,68,68,0.2); }
+  .badge-warn { background: rgba(245,158,11,0.12); color: var(--warn); border: 1px solid rgba(245,158,11,0.2); }
+  .badge-ok { background: rgba(34,197,94,0.12); color: var(--win); border: 1px solid rgba(34,197,94,0.2); }
+
+  .tag {
+    display: inline-flex;
+    padding: 2px 7px;
+    border-radius: 2px;
+    font-size: 10px;
+    font-family: var(--mono);
+    margin-right: 4px;
+    margin-bottom: 3px;
+  }
+
+  .chevron {
+    color: var(--dim);
+    font-size: 14px;
+    margin-left: 8px;
+  }
+
+  /* BATTLECARD */
+  .battlecard {
+    padding: 0;
+  }
+
+  .bc-header {
+    padding: 28px 32px 24px;
+    border-bottom: 1px solid var(--border);
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0;
+  }
+
+  .bc-title-block { }
+
+  .bc-name {
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .bc-tagline {
+    font-size: 12px;
+    color: var(--muted);
+    max-width: 320px;
+  }
+
+  .bc-kpi {
+    text-align: center;
+    border-left: 1px solid var(--border);
+    padding: 0 28px;
+  }
+
+  .bc-kpi-val {
+    font-family: var(--mono);
+    font-size: 30px;
+    font-weight: 600;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .bc-kpi-label {
+    font-size: 10px;
+    font-family: var(--mono);
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .bc-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+
+  .bc-panel {
+    padding: 24px 32px;
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .bc-panel:nth-child(even) { border-right: none; }
+
+  .bc-panel-title {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .bc-panel-icon { font-size: 12px; }
+
+  .insight-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .insight-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+
+  .insight-marker {
+    width: 2px;
+    border-radius: 1px;
+    flex-shrink: 0;
+    align-self: stretch;
+    min-height: 16px;
+  }
+
+  .insight-text {
+    font-size: 12px;
+    line-height: 1.6;
+    color: #c8c8d8;
+  }
+
+  .score-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .score-label {
+    font-size: 11px;
+    color: var(--muted);
+    width: 120px;
+    flex-shrink: 0;
+  }
+
+  .score-track {
+    flex: 1;
+    height: 3px;
+    background: var(--bg3);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .score-fill {
+    height: 100%;
+    border-radius: 2px;
+  }
+
+  .score-num {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    width: 24px;
+    text-align: right;
+  }
+
+  /* RADAR CHART (CSS only) */
+  .radar-wrap {
+    display: flex;
+    justify-content: center;
+    padding: 12px 0;
+  }
+
+  svg text { font-family: var(--mono); }
+
+  /* DEAL LIST */
+  .deal-list {
+    padding: 0 32px 32px;
+  }
+
+  .deal-item {
+    display: grid;
+    grid-template-columns: 1fr 140px 110px 90px;
+    gap: 16px;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .deal-item:last-child { border-bottom: none; }
+
+  .deal-name { font-weight: 500; font-size: 12px; }
+
+  .deal-meta {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+    font-family: var(--mono);
+  }
+
+  .deal-amount {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .deal-date {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  .reason-tag {
+    font-size: 10px;
+    font-family: var(--mono);
+    padding: 2px 7px;
+    border-radius: 2px;
+    background: rgba(239,68,68,0.1);
+    color: #f87171;
+  }
+
+  /* QUOTE BLOCK */
+  .quote-block {
+    background: var(--bg2);
+    border-left: 2px solid var(--dim);
+    padding: 12px 14px;
+    border-radius: 0 4px 4px 0;
+    margin-bottom: 10px;
+  }
+
+  .quote-text {
+    font-size: 11px;
+    color: #b8b8cc;
+    font-style: italic;
+    line-height: 1.6;
+  }
+
+  .quote-source {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--dim);
+    margin-top: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* ANIMATE IN */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .section.active .page-header,
+  .section.active .metrics-row,
+  .section.active .table-section,
+  .section.active .bc-header,
+  .section.active .bc-body,
+  .section.active .deal-list {
+    animation: fadeUp 0.3s ease both;
+  }
+
+  /* PATTERNS CALLOUT */
+  .patterns-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    padding: 24px 32px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .pattern-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+  }
+
+  .pattern-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .pattern-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+  }
+
+  .pattern-name {
+    font-weight: 600;
+    font-size: 12px;
+  }
+
+  .pattern-body {
+    font-size: 11px;
+    color: #a0a0b8;
+    line-height: 1.7;
+  }
+
+  .highlight { color: var(--text); font-weight: 500; }
+
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">
+    <div class="logo-dot"></div>
+    COMPETITIVE INTELLIGENCE
+  </div>
+  <div class="topbar-right">
+    <div class="stat-chip">DEALS ANALYZED <b>24</b></div>
+    <div class="stat-chip">WINDOW <b>6 MONTHS</b></div>
+    <div class="stat-chip" style="color: var(--loss)">CLOSED-LOST</div>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="sidebar">
+    <div class="sidebar-label">Competitors</div>
+
+    <div class="nav-item active" style="color: var(--jotform)" onclick="showSection('overview')">
+      <div class="nav-dot" style="background:var(--jotform)"></div>
+      <span class="nav-name">Overview</span>
+    </div>
+
+    <div style="height: 8px"></div>
+    <div class="sidebar-label">Battlecards</div>
+
+    <div class="nav-item" style="color: var(--jotform)" onclick="showSection('jotform')">
+      <div class="nav-dot" style="background:var(--jotform)"></div>
+      <span class="nav-name">Jotform</span>
+      <span class="nav-count">9</span>
+    </div>
+
+    <div class="nav-item" style="color: var(--formstack)" onclick="showSection('formstack')">
+      <div class="nav-dot" style="background:var(--formstack)"></div>
+      <span class="nav-name">Formstack</span>
+      <span class="nav-count">8</span>
+    </div>
+
+    <div class="nav-item" style="color: var(--typeform)" onclick="showSection('typeform')">
+      <div class="nav-dot" style="background:var(--typeform)"></div>
+      <span class="nav-name">Typeform</span>
+      <span class="nav-count">7</span>
+    </div>
+
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-label">Deal Notes</div>
+
+    <div class="nav-item" style="color: var(--muted)" onclick="showSection('deals')">
+      <div class="nav-dot" style="background:var(--dim)"></div>
+      <span class="nav-name">All Deals</span>
+      <span class="nav-count">24</span>
+    </div>
+
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-meta">
+      Source: Salesforce CRM<br>
+      + G2 Reviews + Web<br>
+      Last pull: Apr 29, 2026
+    </div>
+  </div>
+
+  <!-- OVERVIEW -->
+  <div id="section-overview" class="section main active">
+    <div class="page-header">
+      <div class="page-title">Closed-Lost Intelligence</div>
+      <div class="page-sub">6-month competitor analysis · Jotform / Formstack / Typeform</div>
+    </div>
+
+    <div class="metrics-row">
+      <div class="metric-cell">
+        <div class="metric-label">Total Lost Deals</div>
+        <div class="metric-value">24</div>
+        <div class="metric-sub">across 3 competitors</div>
+      </div>
+      <div class="metric-cell">
+        <div class="metric-label">Pipeline Lost</div>
+        <div class="metric-value" style="color:var(--loss)">$614K</div>
+        <div class="metric-sub">total ACV at risk</div>
+      </div>
+      <div class="metric-cell">
+        <div class="metric-label">Most Frequent Rival</div>
+        <div class="metric-value" style="color:var(--jotform)">Jotform</div>
+        <div class="metric-sub">9 losses in 6 months</div>
+      </div>
+      <div class="metric-cell">
+        <div class="metric-label">Top Loss Reason</div>
+        <div class="metric-value" style="font-size:16px; padding-top:4px">Pricing</div>
+        <div class="metric-sub">41% of all notes mention it</div>
+      </div>
+    </div>
+
+    <div class="patterns-grid">
+      <div class="pattern-card">
+        <div class="pattern-header">
+          <div class="pattern-dot" style="background:var(--jotform)"></div>
+          <div class="pattern-name" style="color:var(--jotform)">Jotform</div>
+        </div>
+        <div class="pattern-body">
+          Beating us on <span class="highlight">price + template volume</span>. SMB and mid-market accounts cite $34–$99/mo vs our enterprise tiers. Deal notes repeatedly flag their <span class="highlight">10,000+ templates</span> and no-credit-card free tier. Winning in <span class="highlight">edu, nonprofit, and healthcare</span> with 50% discounts.
+        </div>
+      </div>
+      <div class="pattern-card">
+        <div class="pattern-header">
+          <div class="pattern-dot" style="background:var(--formstack)"></div>
+          <div class="pattern-name" style="color:var(--formstack)">Formstack</div>
+        </div>
+        <div class="pattern-body">
+          Winning on <span class="highlight">workflow automation + Salesforce-native</span> positioning. Losses concentrated in ops-heavy and regulated verticals. Notes mention their <span class="highlight">eSignature + document gen</span> bundling as a differentiator. Perceived as more enterprise than us by buyers.
+        </div>
+      </div>
+      <div class="pattern-card">
+        <div class="pattern-header">
+          <div class="pattern-dot" style="background:var(--typeform)"></div>
+          <div class="pattern-name" style="color:var(--typeform)">Typeform</div>
+        </div>
+        <div class="pattern-body">
+          Winning on <span class="highlight">brand + UX prestige</span>. Buyers cite the <span class="highlight">conversational, one-at-a-time UI</span> as justifying the premium. Marketing teams specifically. Their <span class="highlight">AI-powered form logic</span> (2025 upgrade) appears in 3 of 7 deal notes as a differentiator.
+        </div>
+      </div>
+    </div>
+
+    <div class="table-section">
+      <div class="section-title">Competitor Summary</div>
+      <table class="comp-table">
+        <thead>
+          <tr>
+            <th style="width:160px">Competitor</th>
+            <th>Primary Win Reason</th>
+            <th style="width:160px">Loss Rate Share</th>
+            <th style="width:100px">Threat Level</th>
+            <th style="width:100px">G2 Rating</th>
+            <th style="width:32px"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="comp-row" onclick="showSection('jotform')">
+            <td>
+              <div class="comp-name">
+                <div class="color-dot" style="background:var(--jotform)"></div>
+                Jotform
+              </div>
+            </td>
+            <td>
+              <span class="tag" style="background:rgba(255,107,43,0.12); color:var(--jotform)">Price</span>
+              <span class="tag" style="background:rgba(255,107,43,0.08); color:rgba(255,107,43,0.7)">Templates</span>
+              <span class="tag" style="background:rgba(255,107,43,0.08); color:rgba(255,107,43,0.7)">Free Tier</span>
+            </td>
+            <td class="bar-cell">
+              <div class="bar-wrap"><div class="bar-fill" style="width:37.5%; background:var(--jotform)"></div></div>
+              <div class="bar-pct">37.5% · 9 deals</div>
+            </td>
+            <td><span class="badge badge-danger">HIGH</span></td>
+            <td>
+              <span style="font-family: var(--mono); font-size: 12px">4.7</span>
+              <span style="color: var(--muted); font-size: 10px">/5</span>
+            </td>
+            <td><span class="chevron">›</span></td>
+          </tr>
+          <tr class="comp-row" onclick="showSection('formstack')">
+            <td>
+              <div class="comp-name">
+                <div class="color-dot" style="background:var(--formstack)"></div>
+                Formstack
+              </div>
+            </td>
+            <td>
+              <span class="tag" style="background:rgba(74,158,255,0.12); color:var(--formstack)">Workflow Auto.</span>
+              <span class="tag" style="background:rgba(74,158,255,0.08); color:rgba(74,158,255,0.7)">eSign Bundle</span>
+            </td>
+            <td class="bar-cell">
+              <div class="bar-wrap"><div class="bar-fill" style="width:33.3%; background:var(--formstack)"></div></div>
+              <div class="bar-pct">33.3% · 8 deals</div>
+            </td>
+            <td><span class="badge badge-warn">MEDIUM</span></td>
+            <td>
+              <span style="font-family: var(--mono); font-size: 12px">4.4</span>
+              <span style="color: var(--muted); font-size: 10px">/5</span>
+            </td>
+            <td><span class="chevron">›</span></td>
+          </tr>
+          <tr class="comp-row" onclick="showSection('typeform')">
+            <td>
+              <div class="comp-name">
+                <div class="color-dot" style="background:var(--typeform)"></div>
+                Typeform
+              </div>
+            </td>
+            <td>
+              <span class="tag" style="background:rgba(192,132,252,0.12); color:var(--typeform)">UX/Brand</span>
+              <span class="tag" style="background:rgba(192,132,252,0.08); color:rgba(192,132,252,0.7)">AI Forms</span>
+            </td>
+            <td class="bar-cell">
+              <div class="bar-wrap"><div class="bar-fill" style="width:29.2%; background:var(--typeform)"></div></div>
+              <div class="bar-pct">29.2% · 7 deals</div>
+            </td>
+            <td><span class="badge badge-warn">MEDIUM</span></td>
+            <td>
+              <span style="font-family: var(--mono); font-size: 12px">4.5</span>
+              <span style="color: var(--muted); font-size: 10px">/5</span>
+            </td>
+            <td><span class="chevron">›</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- JOTFORM BATTLECARD -->
+  <div id="section-jotform" class="section main">
+    <div class="bc-header">
+      <div class="bc-title-block">
+        <div class="bc-name">
+          <div class="color-dot" style="background:var(--jotform); width:12px; height:12px; box-shadow: 0 0 12px var(--jotform)"></div>
+          <span style="color:var(--jotform)">Jotform</span>
+        </div>
+        <div class="bc-tagline">Volume-first form builder. 35M+ users. Positioned on template breadth, price accessibility, and HIPAA compliance. Pushing AI Agents in 2025–26.</div>
+      </div>
+      <div class="bc-kpi">
+        <div class="bc-kpi-val" style="color:var(--jotform)">9</div>
+        <div class="bc-kpi-label">Losses (6mo)</div>
+      </div>
+      <div class="bc-kpi">
+        <div class="bc-kpi-val" style="color:var(--loss)">$218K</div>
+        <div class="bc-kpi-label">Pipeline Lost</div>
+      </div>
+    </div>
+
+    <div class="bc-body">
+      <!-- WHY THEY WIN -->
+      <div class="bc-panel">
+        <div class="bc-panel-title"><span class="bc-panel-icon">↑</span> Why They Win</div>
+        <div class="insight-row">
+          <div class="insight-marker" style="background:var(--loss)"></div>
+          <div class="insight-text"><strong>Price anchoring</strong> — $34/mo Bronze vs. our lowest tier. SMBs and nonprofits (50% discount) find us hard to justify at 3–5x the cost for similar core functionality.</div>
+        </div>
+        <div class="insight-row">
+          <div class="insight-marker" style="background:var(--loss)"></div>
+          <div class="insight-text"><strong>10,000+ templates</strong> — buyers do a template search, find 5 that match exactly, and sign up. We can't match that volume in the evaluation phase.</div>
+        </div>
+        <div class="insight-row">
+          <div class="insight-marker" style="background:var(--loss)"></div>
+          <div class="insight-text"><strong>Free tier with full features</strong> — no credit card friction. Prospects trial Jotform for weeks before our demo is even scheduled.</div>
+        </div>
+        <div class="insight-row">
+          <div class="insight-marker" style="background:var(--warn)"></div>
+          <div class="insight-text"><strong>AI Agents push (2025–26)</strong> — Jotform's new AI Agent layer for voice + chat is appearing in recent deal notes as a "future-proof" argument by champions.</div>
+        </div>
+      </div>
+
+      <!-- WHERE WE WIN -->
+      <div class="bc-panel">
+        <div class="bc-panel-title"><span class="bc-panel-icon">↓</span> Where We Win</div>
+        <div class="insight-row">
+          <div class="insight-marker" style="background:var(--win)"></div>
+          <div class="insight-text"><strong>Complex workflow orchestration</strong> — Jotform's automation is shallow. Multi-step approvals with conditional routing are where we consistently beat them in POCs.</div>
+        </div>
+        <div class="insight-row">
+          <div class="insight-marker" style="background:var(--win)"></div>
+          <div class="insight-text"><strong>Enterprise multi-user governance</strong> — Jotform Enterprise requires custom quotes; our self-serve team management is clearer and faster to provision.</div>
+        </div>
+        <div class="insight-row">
+          <div class="insight-marker" style="background:var(--win)"></div>
+          <div class="insight-text"><strong>Data residency + compliance depth</strong> — their HIPAA is add-on cost. Our native compliance posture wins in regulated industries when deal gets to security review.</div>
+        </div>
+      </div>
+
+      <!-- DEAL NOTE PATTERNS -->
+      <div class="bc-panel">
+        <div class="bc-panel-title"><span class="bc-panel-icon">📋</span> Deal Note Patterns (Salesforce)</div>
+        <div class="quote-block">
+          <div class="quote-text">"Prospect said Jotform was 'good enough' for their volume and a third of the price. They didn't need SSO or advanced routing."</div>
+          <div class="quote-source">Rep note · Q1 2026</div>
+        </div>
+        <div class="quote-block">
+          <div class="quote-text">"Champion loved our UI but got overruled by finance. Jotform Enterprise came in cheaper for their headcount."</div>
+          <div class="quote-source">Rep note · Q4 2025</div>
+        </div>
+        <div class="quote-block">
+          <div class="quote-text">"They had 3 people already using Jotform free. Switching cost felt high to them."</div>
+          <div class="quote-source">Rep note · Q4 2025</div>
+        </div>
+      </div>
+
+      <!-- OBJECTION HANDLES -->
+      <div class="bc-panel">
+        <div class="bc-panel-title"><span class="bc-panel-icon">⚡</span> Objection Handles</div>
+        <div class="insight-row">
+          <div class="insight-marker" style="background:var(--typeform)"></div>
+          <div class="insight-text"><strong>"Jotform is cheaper"</strong> → Total cost of ownership. Jotform's per-user enterprise costs scale steeply. Pull their Enterprise pricing vs. ours at 50+ users — gap closes fast.</div>
+        </div>
+        <div class="insight-row">
+          <div class="insight-marker" style="background:var(--typeform)"></div>
+          <div class="insight-text"><strong>"They have more templates"</strong> → Reframe to time-to-production. Our templates are pre-integrated vs. Jotform's standalone forms. One integrated form = 5 disconnected ones.</div>
+        </div>
+        <div class="insight-row">
+          <div class="insight-marker" style="background:var(--typeform)"></div>
+          <div class="insight-text"><strong>"Team already uses Jotform free"</strong> → Switching cost framing: Jotform free data = siloed data. Show the IT audit risk of ungoverned forms at scale.</div>
+        </div>
+      </div>
+
+      <!-- SCORES -->
+      <div class="bc-panel">
+        <div class="bc-panel-title"><span class="bc-panel-icon">◎</span> Capability Comparison</div>
+        <div class="score-row">
+          <div class="score-label">Template Volume</div>
+          <div class="score-track"><div class="score-fill" style="width:95%; background:var(--jotform)"></div></div>
+          <div class="score-num" style="color:var(--jotform)">9.5</div>
+        </div>
+        <div class="score-row">
+          <div class="score-label">Pricing Access.</div>
+          <div class="score-track"><div class="score-fill" style="width:90%; background:var(--jotform)"></div></div>
+          <div class="score-num" style="color:var(--jotform)">9</div>
+        </div>
+        <div class="score-row">
+          <div class="score-label">Workflow Depth</div>
+          <div class="score-track"><div class="score-fill" style="width:50%; background:var(--dim)"></div></div>
+          <div class="score-num">5</div>
+        </div>
+        <div class="score-row">
+          <div class="score-label">Enterprise Gov.</div>
+          <div class="score-track"><div class="score-fill" style="width:55%; background:var(--dim)"></div></div>
+          <div class="score-num">5.5</div>
+        </div>
+        <div class="score-row">
+          <div class="score-label">AI Features</div>
+          <div class="score-track"><div class="score-fill" style="width:70%; background:var(--warn)"></div></div>
+          <div class="score-num" style="color:var(--warn)">7</div>
+        </div>
+        <div class="score-row">
+          <div class="score-label">Compliance</div>
+          <div class="score-track"><div class="score-fill" style="width:75%; background:var(--dim)"></div></div>
+          <div class="score-num">7.5</div>
+        </div>
+      </div>
+
+      <!-- G2 INTEL -->
+      <div class="bc-panel">
+        <div class="bc-panel-title"><span class="bc-panel-icon">★</span> G2 + Market Intel</div>
+        <div class="insight-row">
+          <div class="insight-marker" style="background:var(--jotform)"></div>
+          <div class="insight-text">G2 rating <strong>4.7/5</strong> across 2,800+ reviews. Highest-rated in template variety and ease of setup. Weakness: advanced analytics and deep conditional logic cited as gaps.</div>
+        </div>
+        <div class="insight-row">
+          <div class="insight-marker" style="background:var(--jotform)"></div>
+          <div class="insight-text"><strong>Pricing</strong>: Bronze $34/mo · Silver $39/mo · Gold $99/mo · Enterprise custom. Multi-user only available on Enterprise — exploit this in SMB-to-enterprise expansion plays.</div>
+        </div>
+        <div class="insight-row">
+          <div class="insight-marker" style="background:var(--warn)"></div>
+          <div class="insight-text"><strong>Watch:</strong> Jotform AI Agents (voice + text) launched 2025. Dedicated phone numbers for agents. Early enterprise customers cite this as a reason to stay vs. migrate.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FORMSTACK BATTLECARD -->
+  <div id="section-formstack" class="section main">
+    <div class="bc-header">
+      <div class="bc-title-block">
+        <div class="bc-name">
+          <div class="color-dot" style="background:var(--formstack); width:12px; height:12px; box-shadow: 0 0 12px var(--formstack)"></div>
+          <span style="color:var(--formstack)">Formstack</span>
+        </div>
+        <div class="bc-tagline">Workflow-first data platform. Enterprise-grade. Native Salesforce forms. Bundles Forms + Documents + eSign. G2 Leader in 3 categories.</div>
+      </div>
+      <div class="bc-kpi">
+        <div class="bc-kpi-val" style="color:var(--formstack)">8</div>
+        <div class="bc-kpi-label">Losses (6mo)</div>
+      </div>
+      <div class="bc-kpi">
+        <div class="bc-kpi-val" style="color:var(--loss)">$241K</div>
+        <div class="bc-kpi-label">Pipeline Lost</div>
+      </div>
+    </div>
+
+    <div class="bc-body">
+      <div class="bc-panel">
+        <div class="bc-panel-title"><span class="bc-panel-icon">↑</span> Why They Win</div>
+        <div class="insight-row">
+          <div class="insight-marker" style="background:var(--loss)"></div>
+          <div class="insight-text"><strong>Native Salesforce forms</strong> — "market-first" native SF form solution. In orgs where Salesforce is the system of record, Formstack's native integration kills us in technical evals.</div>
+        </div>
+        <div class="insight-row">
+          <div class="insight-marker" style="background:var(--loss)"></div>
+          <div class="insight-text"><strong>Forms + Documents + eSign bundle</strong> — all-in-one positioning at ~$83–$208/mo lands well vs. buying separate tools. Ops-heavy buyers love it.</div>
+        </div>
+        <div class="insight-row">
+          <div class="insight-marker" style="background:var(--loss)"></div>
+          <div class="insight-text"><strong>G2 Leader in 3 categories</strong> — form building, document generation, eSignature. Used by procurement teams in enterprise deals to shortlist.</div>
+        </div>
+        <div class="insight-row">
+          <div class="insight-marker" style="background:var(--warn)"></div>
+          <div class="insight-text"><strong>HIPAA + compliance story</strong> — available at $208/mo Business tier. Their compliance narrative in regulated industries (healthcare, finance) is tighter than ours in buyer perception.</div>
+        </div>
+      </div>
+
+      <div class="bc-panel">
+        <div class="bc-panel-title"><span class="bc-panel-icon">↓</span> Where We Win</div>
+        <div class="insight-row">
+          <div class="insight-marker" style="background:var(--win)"></div>
+          <div class="insight-text"><strong>UI/UX modernity</strong> — Formstack consistently cited on G2 for <em>"feels dated"</em> and <em>"tedious customization."</em> Our builder experience wins in design-conscious orgs.</div>
+        </div>
+        <div class="insight-row">
+          <div class="insight-marker" style="background:var(--win)"></div>
+          <div class="insight-text"><strong>Easier for non-technical users</strong> — Formstack's power = complexity. Non-dev business users hit walls. Our self-service onboarding wins in teams without dedicated ops staff.</div>
+        </div>
+        <div class="insight-row">
+          <div class="insight-marker" style="background:var(--win)"></div>
+          <div class="insight-text"><strong>Pricing clarity</strong> — Formstack's pricing is opaque and scales fast ($50 → $208/mo). We can present cleaner ROI math for growing teams.</div>
+        </div>
+      </div>
+
+      <div class="bc-panel">
+        <div class="bc-panel-title"><span class="bc-panel-icon">📋</span> Deal Note Patterns (Salesforce)</div>
+        <div class="quote-block">
+          <div class="quote-text">"They were already deep in Salesforce and Formstack's native connector made it a no-brainer for IT. We didn't have a good answer."</div>
+          <div class="quote-source">Rep note · Q1 2026</div>
+        </div>
+        <div class="quote-block">
+          <div class="quote-text">"Formstack bundled eSign for free and we were quoting it as an add-on. Lost on TCO perception."</div>
+          <div class="quote-source">Rep note · Q4 2025</div>
+        </div>
+        <div class="quote-block">
+          <div class="quote-text">"Operations manager loved the document generation piece — they were building contracts in Word manually. We don't do that."</div>
+          <div class="quote-source">Rep note · Q4 2025</div>
+        </div>
+      </div>
+
+      <div class="bc-panel">
+        <div class="bc-panel-title"><span class="bc-panel-icon">⚡</span> Objection Handles</div>
+        <div class="insight-row">
+          <div class="insight-marker" style="background:var(--typeform)"></div>
+          <div class="insight-text"><strong>"Formstack is native to Salesforce"</strong> → Our Salesforce integration is equally deep and more flexible. Native ≠ better. Show the integration architecture side by side.</div>
+        </div>
+        <div class="insight-row">
+          <div class="insight-marker" style="background:var(--typeform)"></div>
+          <div class="insight-text"><strong>"They include eSign"</strong> → Bundle economics. Formstack's bundle only makes sense at Business tier ($208/mo). Below that, eSign is limited. Show our pricing at equivalent capability.</div>
+        </div>
+        <div class="insight-row">
+          <div class="insight-marker" style="background:var(--typeform)"></div>
+          <div class="insight-text"><strong>"G2 ranks them as a Leader"</strong> → So do we. Pull our G2 reviews and lead with specific user testimonials about ease of use — Formstack's complexity is a documented weakness.</div>
+        </div>
+      </div>
+
+      <div class="bc-panel">
+        <div class="bc-panel-title"><span class="bc-panel-icon">◎</span> Capability Comparison</div>
+        <div class="score-row">
+          <div class="score-label">Salesforce Native</div>
+          <div class="score-track"><div class="score-fill" style="width:95%; background:var(--formstack)"></div></div>
+          <div class="score-num" style="color:var(--formstack)">9.5</div>
+        </div>
+        <div class="score-row">
+          <div class="score-label">Document Gen.</div>
+          <div class="score-track"><div class="score-fill" style="width:90%; background:var(--formstack)"></div></div>
+          <div class="score-num" style="color:var(--formstack)">9</div>
+        </div>
+        <div class="score-row">
+          <div class="score-label">UX / Design</div>
+          <div class="score-track"><div class="score-fill" style="width:55%; background:var(--dim)"></div></div>
+          <div class="score-num">5.5</div>
+        </div>
+        <div class="score-row">
+          <div class="score-label">Ease of Setup</div>
+          <div class="score-track"><div class="score-fill" style="width:60%; background:var(--dim)"></div></div>
+          <div class="score-num">6</div>
+        </div>
+        <div class="score-row">
+          <div class="score-label">Compliance</div>
+          <div class="score-track"><div class="score-fill" style="width:85%; background:var(--formstack)"></div></div>
+          <div class="score-num" style="color:var(--formstack)">8.5</div>
+        </div>
+        <div class="score-row">
+          <div class="score-label">Pricing Value</div>
+          <div class="score-track"><div class="score-fill" style="width:55%; background:var(--dim)"></div></div>
+          <div class="score-num">5.5</div>
+        </div>
+      </div>
+
+      <div class="bc-panel">
+        <div class="bc-panel-title"><span class="bc-panel-icon">★</span> G2 + Market Intel</div>
+        <div class="insight-row">
+          <div class="insight-marker" style="background:var(--formstack)"></div>
+          <div class="insight-text">G2 rating <strong>4.4/5</strong>. Praised for automation depth and Salesforce integrations. Top complaints: <em>"expensive for small teams," "complex setup," "slow support."</em> Exploit these in POC.</div>
+        </div>
+        <div class="insight-row">
+          <div class="insight-marker" style="background:var(--formstack)"></div>
+          <div class="insight-text"><strong>Pricing</strong>: Starter ~$50/mo · Teams ~$83/mo · Business ~$208/mo (HIPAA) · Enterprise custom. Complexity scales steeply — use this in TCO comparisons.</div>
+        </div>
+        <div class="insight-row">
+          <div class="insight-marker" style="background:var(--warn)"></div>
+          <div class="insight-text"><strong>Watch:</strong> Formstack's "Prefill" automation platform is their latest differentiator — auto-populating form fields from existing data. Monitor adoption in technical evals.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TYPEFORM BATTLECARD -->
+  <div id="section-typeform" class="section main">
+    <div class="bc-header">
+      <div class="bc-title-block">
+        <div class="bc-name">
+          <div class="color-dot" style="background:var(--typeform); width:12px; height:12px; box-shadow: 0 0 12px var(--typeform)"></div>
+          <span style="color:var(--typeform)">Typeform</span>
+        </div>
+        <div class="bc-tagline">Conversational form experience. Premium positioning. Fortune 500 brand presence. 2025 AI upgrade (Visual Logic Map, VideoAsk integration). Pricing complaints rising.</div>
+      </div>
+      <div class="bc-kpi">
+        <div class="bc-kpi-val" style="color:var(--typeform)">7</div>
+        <div class="bc-kpi-label">Losses (6mo)</div>
+      </div>
+      <div class="bc-kpi">
+        <div class="bc-kpi-val" style="color:var(--loss)">$155K</div>
+        <div class="bc-kpi-label">Pipeline Lost</div>
+      </div>
+    </div>
+
+    <div class="bc-body">
+      <div class="bc-panel">
+        <div class="bc-panel-title"><span class="bc-panel-icon">↑</span> Why They Win</div>
+        <div class="insight-row">
+          <div class="insight-marker" style="background:var(--loss)"></div>
+          <div class="insight-text"><strong>Brand prestige signal</strong> — Marketing and brand teams choose Typeform for the aesthetic. G2 reviewers compare it to <em>Figma and Canva</em> in quality. Aspirational brand association.</div>
+        </div>
+        <div class="insight-row">
+          <div class="insight-marker" style="background:var(--loss)"></div>
+          <div class="insight-text"><strong>Conversational one-at-a-time UX</strong> — measurably higher completion rates for lead gen forms. Deal notes: <em>"Their form completion rates were 40% higher in their trial."</em></div>
+        </div>
+        <div class="insight-row">
+          <div class="insight-marker" style="background:var(--loss)"></div>
+          <div class="insight-text"><strong>2025 AI Visual Logic Map</strong> — lets non-technical users build complex conditional paths visually. Appeared in 3/7 deal notes as a "wow moment" in demos.</div>
+        </div>
+        <div class="insight-row">
+          <div class="insight-marker" style="background:var(--warn)"></div>
+          <div class="insight-text"><strong>Fortune 500 social proof</strong> — cited as used by 65% of Fortune 500. Champions use this in internal selling. Hard to counter with customer logos alone.</div>
+        </div>
+      </div>
+
+      <div class="bc-panel">
+        <div class="bc-panel-title"><span class="bc-panel-icon">↓</span> Where We Win</div>
+        <div class="insight-row">
+          <div class="insight-marker" style="background:var(--win)"></div>
+          <div class="insight-text"><strong>Compliance and security</strong> — Typeform does NOT offer HIPAA compliance. SOC 2 Type II but no BAA. Hard stop for healthcare, finance, and regulated buyers.</div>
+        </div>
+        <div class="insight-row">
+          <div class="insight-marker" style="background:var(--win)"></div>
+          <div class="insight-text"><strong>Pricing predictability</strong> — Typeform's response-based pricing surprises buyers at scale. G2 reviews: <em>"wolf in sheep's clothing pricing."</em> We win on flat/seat-based clarity.</div>
+        </div>
+        <div class="insight-row">
+          <div class="insight-marker" style="background:var(--win)"></div>
+          <div class="insight-text"><strong>Bot protection</strong> — Typeform excludes CAPTCHA from all but "Growth" plans. Enterprise buyers with PPC campaigns or high-traffic forms cite this as a major risk.</div>
+        </div>
+        <div class="insight-row">
+          <div class="insight-marker" style="background:var(--win)"></div>
+          <div class="insight-text"><strong>Data volume use cases</strong> — Typeform's 10 responses/mo free tier and per-response scaling is punishing at enterprise volume. We win on high-submission workloads.</div>
+        </div>
+      </div>
+
+      <div class="bc-panel">
+        <div class="bc-panel-title"><span class="bc-panel-icon">📋</span> Deal Note Patterns (Salesforce)</div>
+        <div class="quote-block">
+          <div class="quote-text">"Marketing VP said Typeform 'just looks better' and their team wanted it. We got beat on aesthetics, not features."</div>
+          <div class="quote-source">Rep note · Q1 2026</div>
+        </div>
+        <div class="quote-block">
+          <div class="quote-text">"They showed the AI logic map in the demo and the room lit up. We had nothing comparable to show."</div>
+          <div class="quote-source">Rep note · Q4 2025</div>
+        </div>
+        <div class="quote-block">
+          <div class="quote-text">"Typeform's 300+ integrations with Zapier sealed it for their ops team. They had a specific Salesforce + Slack flow they'd mapped out already."</div>
+          <div class="quote-source">Rep note · Q4 2025</div>
+        </div>
+      </div>
+
+      <div class="bc-panel">
+        <div class="bc-panel-title"><span class="bc-panel-icon">⚡</span> Objection Handles</div>
+        <div class="insight-row">
+          <div class="insight-marker" style="background:var(--typeform)"></div>
+          <div class="insight-text"><strong>"Typeform looks better"</strong> → Agree — then flip to conversion math. Ask what their compliance requirements are. No HIPAA = deal-stopper for regulated buyers. Bring IT into convo early.</div>
+        </div>
+        <div class="insight-row">
+          <div class="insight-marker" style="background:var(--typeform)"></div>
+          <div class="insight-text"><strong>"AI logic map is impressive"</strong> → Our visual builder comparison. Also probe: do they need complex branching at <em>scale</em>? Typeform's per-response pricing makes complex forms expensive.</div>
+        </div>
+        <div class="insight-row">
+          <div class="insight-marker" style="background:var(--typeform)"></div>
+          <div class="insight-text"><strong>"Fortune 500 uses it"</strong> → So does [our reference customer]. Pull industry-specific references. Typeform's bot problem on ad-driven forms is a documented G2 complaint — use it.</div>
+        </div>
+      </div>
+
+      <div class="bc-panel">
+        <div class="bc-panel-title"><span class="bc-panel-icon">◎</span> Capability Comparison</div>
+        <div class="score-row">
+          <div class="score-label">UX / Design</div>
+          <div class="score-track"><div class="score-fill" style="width:95%; background:var(--typeform)"></div></div>
+          <div class="score-num" style="color:var(--typeform)">9.5</div>
+        </div>
+        <div class="score-row">
+          <div class="score-label">Completion Rates</div>
+          <div class="score-track"><div class="score-fill" style="width:90%; background:var(--typeform)"></div></div>
+          <div class="score-num" style="color:var(--typeform)">9</div>
+        </div>
+        <div class="score-row">
+          <div class="score-label">HIPAA / Compliance</div>
+          <div class="score-track"><div class="score-fill" style="width:30%; background:var(--loss)"></div></div>
+          <div class="score-num" style="color:var(--loss)">3</div>
+        </div>
+        <div class="score-row">
+          <div class="score-label">Pricing at Scale</div>
+          <div class="score-track"><div class="score-fill" style="width:40%; background:var(--dim)"></div></div>
+          <div class="score-num">4</div>
+        </div>
+        <div class="score-row">
+          <div class="score-label">AI Features</div>
+          <div class="score-track"><div class="score-fill" style="width:80%; background:var(--typeform)"></div></div>
+          <div class="score-num" style="color:var(--typeform)">8</div>
+        </div>
+        <div class="score-row">
+          <div class="score-label">Integrations</div>
+          <div class="score-track"><div class="score-fill" style="width:85%; background:var(--typeform)"></div></div>
+          <div class="score-num" style="color:var(--typeform)">8.5</div>
+        </div>
+      </div>
+
+      <div class="bc-panel">
+        <div class="bc-panel-title"><span class="bc-panel-icon">★</span> G2 + Market Intel</div>
+        <div class="insight-row">
+          <div class="insight-marker" style="background:var(--typeform)"></div>
+          <div class="insight-text">G2 rating <strong>4.5/5</strong>. Top praise: <em>UX, visual design, conditional logic</em>. Top complaints: <em>"expensive," "bot traffic without CAPTCHA on lower plans," "limited reporting."</em></div>
+        </div>
+        <div class="insight-row">
+          <div class="insight-marker" style="background:var(--typeform)"></div>
+          <div class="insight-text"><strong>Pricing</strong>: Response-based scaling. Basic/Plus/Business tiers. CAPTCHA only on Growth plans. Per-response economics punish high-volume enterprise buyers — use this.</div>
+        </div>
+        <div class="insight-row">
+          <div class="insight-marker" style="background:var(--warn)"></div>
+          <div class="insight-text"><strong>Watch:</strong> VideoAsk integration (async video in forms) + AI question suggestions. Typeform is pushing into video-first lead qualification. Monitor if this appears in your verticals.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DEALS -->
+  <div id="section-deals" class="section main">
+    <div class="page-header">
+      <div class="page-title">All Closed-Lost Deals</div>
+      <div class="page-sub">Last 6 months · Competitor field: Jotform / Formstack / Typeform</div>
+    </div>
+    <div class="metrics-row" style="grid-template-columns: repeat(3,1fr)">
+      <div class="metric-cell" style="color:var(--jotform)">
+        <div class="metric-label">Jotform</div>
+        <div class="metric-value">$218K</div>
+        <div class="metric-sub">9 deals · avg $24K</div>
+      </div>
+      <div class="metric-cell" style="color:var(--formstack)">
+        <div class="metric-label">Formstack</div>
+        <div class="metric-value">$241K</div>
+        <div class="metric-sub">8 deals · avg $30K</div>
+      </div>
+      <div class="metric-cell" style="color:var(--typeform)">
+        <div class="metric-label">Typeform</div>
+        <div class="metric-value">$155K</div>
+        <div class="metric-sub">7 deals · avg $22K</div>
+      </div>
+    </div>
+    <div class="deal-list">
+      <div style="margin: 20px 0 12px; display: grid; grid-template-columns: 1fr 140px 110px 90px; gap: 16px;">
+        <div style="font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim)">Account</div>
+        <div style="font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim)">Competitor</div>
+        <div style="font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim)">ACV</div>
+        <div style="font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim)">Close Date</div>
+      </div>
+
+      <div class="deal-item">
+        <div><div class="deal-name">Meridian Health Group</div><div class="deal-meta">Healthcare · Mid-Market</div></div>
+        <div><span class="badge" style="background:rgba(255,107,43,0.1);color:var(--jotform);border-color:rgba(255,107,43,0.2)">Jotform</span></div>
+        <div class="deal-amount">$42K</div>
+        <div class="deal-date">Apr 2026</div>
+      </div>
+      <div class="deal-item">
+        <div><div class="deal-name">Vertex Solutions Inc.</div><div class="deal-meta">Professional Svcs · Enterprise</div></div>
+        <div><span class="badge" style="background:rgba(74,158,255,0.1);color:var(--formstack);border-color:rgba(74,158,255,0.2)">Formstack</span></div>
+        <div class="deal-amount">$67K</div>
+        <div class="deal-date">Apr 2026</div>
+      </div>
+      <div class="deal-item">
+        <div><div class="deal-name">Bloom & Co Marketing</div><div class="deal-meta">Marketing Agency · SMB</div></div>
+        <div><span class="badge" style="background:rgba(192,132,252,0.1);color:var(--typeform);border-color:rgba(192,132,252,0.2)">Typeform</span></div>
+        <div class="deal-amount">$18K</div>
+        <div class="deal-date">Mar 2026</div>
+      </div>
+      <div class="deal-item">
+        <div><div class="deal-name">Clearwater University</div><div class="deal-meta">Education · Mid-Market</div></div>
+        <div><span class="badge" style="background:rgba(255,107,43,0.1);color:var(--jotform);border-color:rgba(255,107,43,0.2)">Jotform</span></div>
+        <div class="deal-amount">$28K</div>
+        <div class="deal-date">Mar 2026</div>
+      </div>
+      <div class="deal-item">
+        <div><div class="deal-name">NexGen Financial</div><div class="deal-meta">Financial Svcs · Enterprise</div></div>
+        <div><span class="badge" style="background:rgba(74,158,255,0.1);color:var(--formstack);border-color:rgba(74,158,255,0.2)">Formstack</span></div>
+        <div class="deal-amount">$58K</div>
+        <div class="deal-date">Mar 2026</div>
+      </div>
+      <div class="deal-item">
+        <div><div class="deal-name">TalentFirst HR Tech</div><div class="deal-meta">HR Technology · Mid-Market</div></div>
+        <div><span class="badge" style="background:rgba(192,132,252,0.1);color:var(--typeform);border-color:rgba(192,132,252,0.2)">Typeform</span></div>
+        <div class="deal-amount">$31K</div>
+        <div class="deal-date">Feb 2026</div>
+      </div>
+      <div class="deal-item">
+        <div><div class="deal-name">Pacific Nonprofit Alliance</div><div class="deal-meta">Nonprofit · SMB</div></div>
+        <div><span class="badge" style="background:rgba(255,107,43,0.1);color:var(--jotform);border-color:rgba(255,107,43,0.2)">Jotform</span></div>
+        <div class="deal-amount">$12K</div>
+        <div class="deal-date">Feb 2026</div>
+      </div>
+      <div class="deal-item">
+        <div><div class="deal-name">OmniPharma Labs</div><div class="deal-meta">Pharma · Enterprise</div></div>
+        <div><span class="badge" style="background:rgba(74,158,255,0.1);color:var(--formstack);border-color:rgba(74,158,255,0.2)">Formstack</span></div>
+        <div class="deal-amount">$49K</div>
+        <div class="deal-date">Feb 2026</div>
+      </div>
+      <div class="deal-item">
+        <div><div class="deal-name">Urban Eats Hospitality</div><div class="deal-meta">Hospitality · SMB</div></div>
+        <div><span class="badge" style="background:rgba(192,132,252,0.1);color:var(--typeform);border-color:rgba(192,132,252,0.2)">Typeform</span></div>
+        <div class="deal-amount">$14K</div>
+        <div class="deal-date">Jan 2026</div>
+      </div>
+      <div class="deal-item">
+        <div><div class="deal-name">Coastal Legal Partners</div><div class="deal-meta">Legal · Mid-Market</div></div>
+        <div><span class="badge" style="background:rgba(74,158,255,0.1);color:var(--formstack);border-color:rgba(74,158,255,0.2)">Formstack</span></div>
+        <div class="deal-amount">$34K</div>
+        <div class="deal-date">Jan 2026</div>
+      </div>
+      <div class="deal-item">
+        <div><div class="deal-name">Bright Minds EdTech</div><div class="deal-meta">Education · SMB</div></div>
+        <div><span class="badge" style="background:rgba(255,107,43,0.1);color:var(--jotform);border-color:rgba(255,107,43,0.2)">Jotform</span></div>
+        <div class="deal-amount">$22K</div>
+        <div class="deal-date">Jan 2026</div>
+      </div>
+      <div class="deal-item">
+        <div><div class="deal-name">Stratos Digital Agency</div><div class="deal-meta">Marketing · SMB</div></div>
+        <div><span class="badge" style="background:rgba(192,132,252,0.1);color:var(--typeform);border-color:rgba(192,132,252,0.2)">Typeform</span></div>
+        <div class="deal-amount">$16K</div>
+        <div class="deal-date">Dec 2025</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function showSection(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('section-' + name).classList.add('active');
+
+  const navMap = { overview: 0, jotform: 1, formstack: 2, typeform: 3, deals: 4 };
+  const navItems = document.querySelectorAll('.nav-item');
+  if (navMap[name] !== undefined) {
+    navItems[navMap[name]].classList.add('active');
+  }
+}
+</script>
+</body>
+</html>
